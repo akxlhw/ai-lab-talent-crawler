@@ -15,12 +15,17 @@
 
 #### 1. Stanford NLP Group (https://nlp.stanford.edu/)
 - **人员页面**：https://nlp.stanford.edu/people/
-- **结构**：按角色分区（Faculty, Research Scientists, PhD Students, MS Students, Alumni）
+- **结构**：
+  - 当前成员分区：`Professors`, `Affiliated Professors`, `Postdocs`, `PhD Students`, `Masters Students`, `Undergraduate Students`, `Visiting Scholars`, `Staff`
+  - **Alumni 是主分水岭**：`Alumni` 之后是 `<u>` 包裹的子分类（如 Research Scientists, PhD Students, Master's Students, Undergraduate Alumni, PhD Alumni, Postdoctoral Fellows 等），**这些子分类全部属于校友，不是当前成员**
+  - 人员分区使用 `.showroom-controls .links` 作为标题，但 `Alumni` 之后的标题应忽略
 - **采集策略**：
-  - 列表页直接包含 homepage 链接
-  - **优先使用 JavaScript 批量提取**：`document.querySelectorAll('a[href*=".github.io"], a[href*=".stanford.edu"]')` 可提取所有人员姓名、主页、院系
+  - 按 DOM 顺序解析，遇到 `Alumni` 标题立即停止当前成员采集
+  - 使用 JavaScript 提取 `.showroom-controls .links` 标题，并对每个标题提取后续 `.row .team-member` 中的人员
+  - 推荐脚本：`document.querySelectorAll('.showroom-controls')` 遍历标题，对每个标题收集下一个 `.row` 中所有 `.team-member a` 的 name/url，遇到 `Alumni` 停止
+  - 不要简单按关键字匹配标题（会误把 Alumni 下的 PhD Students 当作当前成员）
   - 对于需要补充 bio 详情的人员，再逐个访问个人主页
-  - 使用 LLM 从 accessibility tree 提取效果良好（适合小规模）
+  - 使用 LLM 从 accessibility tree 提取效果良好（适合小规模），但需先指示其忽略 Alumni 区域
 
 #### 2. Stanford Vision and Learning Lab (https://svl.stanford.edu/)
 - **人员页面**：https://svl.stanford.edu/people
@@ -71,6 +76,18 @@
   3. 通过 GitHub 搜索 `name + stanford + phd` 找到个人主页
   4. 如果仍无 homepage，在 role_raw 中标注 "PhD Student" 并记录 department
 - 不要为空 homepage 的人员编造链接
+
+### 页面层级解析：Alumni 不是当前成员
+- 以 `https://nlp.stanford.edu/people/` 为例：
+  - 第一层分类：`Professors` / `Affiliated Professors` / `Postdocs` / `PhD Students` / `Masters Students` / `Undergraduate Students` / `Visiting Scholars` / `Staff` / `Alumni`
+  - `Alumni` 是独立的第一层主分类，其下第二层子分类（如 `Research Scientists`、`PhD Students`、`Master's Students`、`Undergraduate Alumni` 等）均属于校友，**不得混入当前成员**
+- 必须先用 DOM 结构定位 `Alumni` 标题作为分水岭，再分别解析前后区域，避免把 Alumni 下的 "PhD Students" 子标题误当作当前 PhD Students
+- 实现方式：使用 `browser_console` 查找 section 标题容器（如 `.showroom-controls .links`），按 DOM 顺序读取，遇到 `Alumni` 即停止当前成员解析，后续全部归入校友
+
+### 结构化提取 vs 文本关键词匹配
+- 不要仅依赖 `innerText` 关键词匹配来识别 section，因为 Alumni 下的子标题可能与当前成员分类同名（如 "PhD Students"）
+- 优先使用 DOM 结构：标题容器的 class、顺序位置、`<u>`/`<b>`/`<h2>`/`<h3>` 标签；必要时直接查看页面 HTML 源码判断层级
+- 对复杂页面，先保存一份原始 HTML 快照到本地，再离线解析
 
 ### 子代理 API 限制处理
 - 子代理可能遇到 LLM API 限制（HTTP 429）

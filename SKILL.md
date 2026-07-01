@@ -69,6 +69,34 @@ description: |
 5. 有子实验室 → 跟进其 people 页 → 继续
 6. 累积所有人员
 
+### 阶段四：应对工具调用上限与断点续采
+
+Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任务被中断后数据丢失，执行中必须遵守：
+
+1. **工具调用预算分配**：
+   - 单次 turn 总工具调用上限约为 50-100 次（取决于平台配置）
+   - 预留 10-15 次给最终验证、报告生成和文件保存
+   - 实际可用于页面采集的调用约 35-85 次
+
+2. **优先级策略**：
+   - 优先使用 `browser_console` 执行 JavaScript 批量提取，而非多次 `browser_navigate` + LLM 解析
+   - 一个实验室人员列表页尽可能在 3-5 次工具调用内完成提取（navigate + console + 保存）
+   - 避免在当前会话中逐个访问 50+ 人员的 bio 详情页
+
+3. **断点保存点**：
+   - 每完成一个子实验室的数据提取，立即保存 JSONL 中间文件
+   - 每完成一批子代理的 bio 跟进，立即合并并保存主 JSONL
+   - 中间文件命名：`output/<lab_slug>/_checkpoint_YYYY-MM-DD_HH-MM.jsonl`
+
+4. **被中断后的恢复**：
+   - 如果主会话达到上限中断，读取最新的 checkpoint JSONL
+   - 从上次完成的位置继续，不要重新采集已确认的数据
+   - 在报告中标注中断和恢复情况
+
+5. **何时必须分 turn**：
+   - 预计需要 >50 次工具调用才能完成时，提前告知用户将分多个 turn 执行
+   - 每个 turn 结束时保存进度并给出阶段性报告
+
 ### 输出
 1. 写 JSONL：`output/<lab_slug>/_YYYY-MM-DD.jsonl`（schema 见 `references/output-schema.md`）
 2. 写完成报告：`output/<lab_slug>/_report_YYYY-MM-DD.md`（人数/角色分布/质量提示/异常）
@@ -103,10 +131,12 @@ description: |
 | 表格数据提取 | 对于表格结构（如 statsml 的 Post-Docs 列表），优先使用 JavaScript 提取而非 LLM 解析 |
 | 服务超时处理 | 浏览器服务超时假死时，检查进程状态并重启服务 |
 | 子代理 API 限制 fallback | 子代理遇到 LLM API 限制（HTTP 429）时，切换到当前会话使用 `browser_console` 直接提取 DOM 内容，避免继续消耗子代理 API 额度 |
-| 无 homepage 人员兜底 | 无 homepage 的 PhD 学生可从实验室人员列表页提取基础信息，并在 role_raw 中标注 "PhD Student"，不编造链接 |
-| 主会话工具调用预算 | 单次用户消息（turn）有工具调用上限，需预留 10-15 次调用给最终验证、报告和文件保存；列表页提取和 bio 跟进优先使用 JavaScript 减少调用次数 |
-| 断点续采 | 每完成一个重要阶段（入口发现、结构探索、单个子实验室提取、一批子代理完成）立即保存 JSONL 中间文件，避免中断后从头开始 |
-| 进度主动汇报 | 长采集任务中每完成一个子实验室或每处理 50 人，向用户汇报当前进度和预计剩余工作 |
+| 无 homepage 人员兜底 | 无 homepage 的 PhD 学生可从实验室人员列表页提取基础信息，并在 role_raw 中标注 "PhD Student"，不编造 |
+| 主会话工具调用预算 | 单次 turn 预留 10-15 次工具调用给最终验证、报告和文件保存 |
+| 断点续采 | 每完成重要阶段立即保存 JSONL checkpoint 文件 |
+| 进度主动汇报 | 长任务中每完成一个子实验室或每 50 人向用户汇报进度 |
+| 页面层级优先解析 | 人员页面必须先识别 **第一层分类**（如 Professors / Postdocs / PhD Students / Alumni），再判断第二层是否属于 Alumni 子分类。Alumni 下所有子分类（包括 "PhD Students"、"Research Scientists" 等）都属于校友，不得混入当前成员 |
+| 结构化提取优先 | 优先用 `browser_console` + DOM 结构提取（如 `.showroom-controls .links`、`<h2>`、`<u>` 等），而非依赖纯文本关键词匹配，避免把 Alumni 子标题误当作当前成员分类 |
 ## 参考文件
 
 执行时按需查阅：
@@ -116,5 +146,8 @@ description: |
 - `references/importer-contract.md` — 与 AI4Talent importer 的接口契约
 - `references/browser-service-management.md` — Camofox/kimi-webbridge 服务启动、探活、故障处理
 - `references/lab-specific-patterns.md` — 各实验室页面结构特点和最佳采集策略（含 Stanford AI Lab 子实验室详细模式）
+- `references/large-scale-bio-followup.md` — 大规模 bio 详情页跟进策略和子代理并行方案
+- `references/photo-extraction.md` — 教授/学生照片提取（可选后处理）
+- `references/github-skill-sync.md` — 将本 skill 同步到 GitHub 而不泄露 `output/` 数据
 - `labs.yaml` — 目标实验室清单
 - `scripts/crawl.py` — 辅助脚本（探活/写 JSONL/写报告/读 labs.yaml）
