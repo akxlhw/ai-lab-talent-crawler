@@ -58,8 +58,9 @@ description: |
 
 ### 阶段三：数据提取（循环每个目标页）
 1. 浏览器 snapshot → LLM 按 `references/extraction-prompt.md` 提取人员 JSON
-2. 每个人记录：name / role_section / homepage / department（列表页字段）
+2. 每个人记录：name / role_section / homepage / department / **photo_url**（列表页字段）
 3. **bio 详情全量跟进**：每个人的 bio 链接都跟进，补充 role_raw / cohort_year / email / research_areas（详见 extraction-prompt.md 的 bio 提取部分）
+   - 同时提取 **photo_url**：从个人主页找到头像照片URL（第一个非Logo、尺寸>80px的图片）
    - 注意：部分教授页面（如 Andrew Ng）可能需要登录，遇到登录墙则跳过并记录
    - 部分页面（如 Stanford CS 系的 profiles）可直接访问，应优先跟进这些页面获取完整信息
    - 对于大量人员（>100人），使用批量脚本自动化跟进，优先处理有 homepage 的人员
@@ -98,9 +99,11 @@ Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任
    - 每个 turn 结束时保存进度并给出阶段性报告
 
 ### 输出
-1. 写 JSONL：`output/<lab_slug>/_YYYY-MM-DD.jsonl`（schema 见 `references/output-schema.md`）
-2. 写完成报告：`output/<lab_slug>/_report_YYYY-MM-DD.md`（人数/角色分布/质量提示/异常）
-3. 写探索路径：`output/<lab_slug>/_crawl_path_YYYY-MM-DD.md`（入口/跳转链/跳过决策）
+1. 写 JSONL：`<cwd>/output/<lab_slug>/_YYYY-MM-DD.jsonl`（schema 见 `references/output-schema.md`）
+2. 写完成报告：`<cwd>/output/<lab_slug>/_report_YYYY-MM-DD.md`（人数/角色分布/质量提示/异常）
+3. 写探索路径：`<cwd>/output/<lab_slug>/_crawl_path_YYYY-MM-DD.md`（入口/跳转链/跳过决策）
+
+其中 `<cwd>` 是启动 Hermes 时的当前工作目录。这样每次项目的数据都保存在项目自己的目录下，不会和 skill 代码混在一起。脚本 `scripts/crawl.py` 中的 `resolve_output_dir` 函数已封装该逻辑：显式传入 `output_dir` 时使用该值，否则使用 `Path.cwd() / "output"`。
 
 ## 完成标准
 
@@ -112,6 +115,27 @@ Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任
 
 未满足 → 在报告中标注 "needs review" 并列出原因。**部分成功优于完全失败**：单个子站失败时，已采的数据正常输出，失败的子站记入报告。
 
+### CSAIL-Specific Efficiency: Static HTML Scraping
+
+For **MIT CSAIL** (and other labs serving clean server-rendered HTML like Drupal sites), the browser-driven approach can be replaced with **concurrent HTTP scraping** for large batches:
+
+1. **Fetch with requests or urllib** — Instead of `browser_navigate(url)` for each person, use `requests` (preferred — `pip install requests`) or `urllib.request` (stdlib fallback) with `concurrent.futures.ThreadPoolExecutor(max_workers=5)` to fetch 25+ pages in parallel. `requests` has significantly better timeout handling and error reporting than `urllib`.
+
+2. **Parse with BeautifulSoup** — Use BeautifulSoup (+ lxml parser) instead of regex or LLM from accessibility tree. The HTML structure is consistent (field classes like `field--name-field-title`, `field--name-field-research-area`). BeautifulSoup is more reliable than raw regex on Drupal HTML (whitespace variations, entity encoding). Use regex only for year/number extraction from free-text bio paragraphs.
+
+3. **Key HTML patterns to look for**:
+   - `field--name-field-title` → role text
+   - `field--name-field-research-area` (person-level, Format B) → research areas
+   - `<h4>Research Areas</h4>` in group cards (Format A fallback) → group-level areas
+   - `<h4>Related Links</h4>` → homepage under "Personal Website" or direct link
+   - Bio paragraph text → cohort year from education history (e.g., "BS in ... in 2018") or from "since YYYY" / "joined ... YYYY" / "started/began ... YYYY" patterns
+
+4. **Exclude footer/social media links** from homepage matching (facebook.com, twitter.com, youtube.com, instagram.com, linkedin.com, computing.mit.edu, web.mit.edu).
+
+5. **This approach is 5-10x faster** than browser navigation for 25+ pages — the entire batch completes in ~30 seconds instead of several minutes.
+
+6. **Fallback to browser** when the page requires JavaScript rendering or when regex parsing fails.
+
 ## 约束（硬边界，必须遵守）
 
 | 约束 | 说明 |
@@ -120,6 +144,7 @@ Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任
 | 单次时间预算 30min | 超限时停止，已采集的数据正常输出 |
 | 跳过非人员页面 | twitter/github/会议/PDF/新闻/博客 → LLM 判定后跳过 |
 | bio 详情全量跟进 | 列表页每个人都跟进其 bio 详情页；不采样、不限制；用户明确有充足 API 额度时，应完整跟进所有人员 |
+| photo_url 默认收录 | 从每个人员的个人主页提取头像照片URL（第一个非Logo图片），写入 photo_url 字段，不下载图片 |
 | 不伪造字段 | 提取不到的字段直接省略（不写 null/空串/猜测值） |
 | 每页提取校验 | LLM 输出的每人 JSON 必须含 name 字段，否则丢弃该条 |
 | robots.txt 遵守 | 访问前检查，disallow 则跳过该路径 |
@@ -148,6 +173,8 @@ Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任
 - `references/lab-specific-patterns.md` — 各实验室页面结构特点和最佳采集策略（含 Stanford AI Lab 子实验室详细模式）
 - `references/large-scale-bio-followup.md` — 大规模 bio 详情页跟进策略和子代理并行方案
 - `references/photo-extraction.md` — 教授/学生照片提取（可选后处理）
+- `references/mit-csail-page-structure.md` — MIT CSAIL 人物详情页面结构，含角色提取规则和研究领域标签处理
+- `references/batch-bio-extraction.md` — 大规模 bio 详情页批量提取：Python + requests/BeautifulSoup 方案，比逐个浏览器导航快 5-10 倍，含 DOM 选择器参考表和服务超时处理
 - `references/github-skill-sync.md` — 将本 skill 同步到 GitHub 而不泄露 `output/` 数据
 - `labs.yaml` — 目标实验室清单
 - `scripts/crawl.py` — 辅助脚本（探活/写 JSONL/写报告/读 labs.yaml）

@@ -27,6 +27,7 @@ output/<lab_slug>/_YYYY-MM-DD.jsonl
 | `parent_lab` | ✅ | string | 所属顶层实验室（对应 labs.yaml 的 name，如 "Stanford AI Lab"） |
 | `source_url` | ✅ | string | 采集该人员的列表页 URL |
 | `source_detail_url` | 可选 | string | bio 详情页 URL（若 agent 进了详情页） |
+| `photo_url` | 可选 | string | 个人主页头像照片URL（从bio详情页或列表页提取） |
 | `collected_at` | ✅ | string | ISO8601 采集时间戳（如 "2026-06-29T11:04:00Z"） |
 
 ## 关键规则
@@ -37,6 +38,7 @@ output/<lab_slug>/_YYYY-MM-DD.jsonl
    - `role_section` 来自页面分区（粗分类，用于 role_type 映射）
    - `role_raw` 来自 bio 详情页（精确头衔，用于展示）
    - 两者独立，列表页只有 role_section，进了 bio 才有 role_raw
+4. **photo_url 默认收录**：从每个人员的 bio 详情页/个人主页提取头像照片URL。使用浏览器或HTTP请求找到页面上第一个非Logo/非导航的图片（尺寸>80px），记录其完整URL。不下载图片本身。
 4. **cohort_year 只从明确表述提取**（"PhD since 2020"/"joined in 2021"），禁止从论文年份推断。提取到 cohort_year 必须同时填 cohort_source。
 5. **lab_name vs parent_lab**：一个 SAIL 下有多个子实验室（NLP/SNAP/Ermon），parent_lab 始终是顶层实验室名。
 

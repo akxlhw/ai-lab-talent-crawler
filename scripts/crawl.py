@@ -21,6 +21,19 @@ from typing import Any
 import yaml
 
 
+def resolve_output_dir(skills_output_dir: str | Path | None = None) -> Path:
+    """Return the preferred output directory for collected data.
+
+    Priority:
+    1. ``skills_output_dir`` if explicitly provided (legacy override).
+    2. Current working directory (where hermes was started), so every project
+       keeps its own data and the output/ directory is not mixed with skill code.
+    """
+    if skills_output_dir is not None:
+        return Path(skills_output_dir)
+    return Path.cwd() / "output"
+
+
 def slugify(name: str) -> str:
     """Convert a lab name to a filesystem-safe slug."""
     slug = re.sub(r"[^\w\u4e00-\u9fff]+", "_", name.strip())
@@ -54,7 +67,7 @@ def write_jsonl(
 
     Validates each entry: must have non-empty name. Drops entries without name.
     """
-    lab_dir = Path(output_dir) / lab_slug
+    lab_dir = resolve_output_dir(output_dir) / lab_slug
     lab_dir.mkdir(parents=True, exist_ok=True)
     path = lab_dir / f"_{date_str}.jsonl"
     with open(path, "w", encoding="utf-8") as f:
@@ -108,7 +121,7 @@ def generate_report(
     report = "\n".join(lines)
 
     lab_slug = slugify(lab_name)
-    lab_dir = Path(output_dir) / lab_slug
+    lab_dir = resolve_output_dir(output_dir) / lab_slug
     lab_dir.mkdir(parents=True, exist_ok=True)
     report_path = lab_dir / f"_report_{date_str}.md"
     report_path.write_text(report, encoding="utf-8")

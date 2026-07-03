@@ -39,3 +39,9 @@ labs:
 
   - name: "清华大学人工智能研究院"
     domain: "https://www.ai.tsinghua.edu.cn"
+
+  - name: "南京大学LAMDA实验室"
+    domain: "http://www.lamda.nju.edu.cn"
+    hints:
+      known_sublabs: ["LAMDA", "南京大学LAMDA"]
+      expected_roles: ["教授", "副教授", "助理教授", "博士生", "博士后", "硕士生", "工作人员"]

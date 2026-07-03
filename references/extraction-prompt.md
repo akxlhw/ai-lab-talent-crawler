@@ -27,7 +27,10 @@
 3. homepage：从人员卡片中提取的个人主页链接（如有）。没有则省略此字段。
 4. department：从卡片提取的院系/专业（如有，如 "Computer Science"）。没有则省略。
 5. 跳过已毕业/校友，除非分区明确标注为 "Alumni"（此时 role_section 填 "Alumni"）。
-6. 不要编造任何字段——提取不到的字段直接省略，不要填 null 或空字符串。
+6. 警惕分层 section 结构：如果页面上有一个顶级 "Alumni" 分区，其下再出现 "PhD Students"、
+   "Research Scientists"、"Master's Students" 等子标题，这些子标题下的人员仍然是校友，
+   必须标记为 "Alumni"，而不是当前成员。遇到这种结构，以顶级分区标签为准。
+7. 不要编造任何字段——提取不到的字段直接省略，不要填 null 或空字符串。
 
 如果页面包含"下一页"、"Next"、"Load more" 或分页控件，在 JSON 数组末尾追加一个
 特殊对象（不计入人员数）：

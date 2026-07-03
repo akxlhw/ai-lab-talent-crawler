@@ -134,12 +134,28 @@ rows.forEach(row => {
 - 原因：子代理使用 LLM 进行页面解析时触发 API 限流
 - 解决：
   1. 停止启动新的子代理
-  2. 在当前会话中直接使用 browser_console 执行 JavaScript 提取
+  2. 在当前会话中直接使用 `browser_console` 执行 JavaScript 提取
   3. 对于实验室人员列表页，使用 JavaScript 一次性批量提取所有人员信息
   4. 对于无法提取的字段，记录为缺失而非编造
 - 预防：
-  - 子代理任务中减少 LLM 调用，优先使用 browser_console 提取
+  - 子代理任务中减少 LLM 调用，优先使用 `browser_console` 提取
   - 将需要 LLM 解析的工作转移到当前会话完成
+
+### 主会话工具调用上限
+- 症状：主 agent 提示 "You've reached the maximum number of tool-calling iterations allowed"
+- 原因：单次 turn 的工具调用次数达到平台上限（通常 50-100 次）
+- 解决：
+  1. 立即停止后续采集，保存当前 JSONL 到 checkpoint 文件
+  2. 给用户一个阶段性总结，说明已完成的部分和剩余工作
+  3. 用户回复 "继续" 后，读取 checkpoint 并从中断点继续
+- **预防**：
+  - 每个 turn 预留 10-15 次调用给保存和报告
+  - 单 turn 内不要逐个访问 50+ 人员的 bio 详情页
+  - 优先使用批量 JavaScript 提取，减少工具调用次数
+- **实验室特定成本估算**：
+  - MIT CSAIL `/person/*` 详情页：每页 2 次工具调用（1× navigate + 1× console）。25 人 ≈ 50 次调用 + 10 次保存 ≈ 60 次。一次 turn 可完成约 20-25 人，超出需分批
+  - Stanford CS profiles：每页 2-3 次调用。页面更复杂可能需要解析 accessiblity tree
+  - 对于已知每人需 2 次调用的实验室，批次大小 = floor((上限 - 15) / 2)
 
 ### 子代理超时
 - 症状：子代理在 600 秒后超时，部分批次未完成
@@ -153,6 +169,26 @@ rows.forEach(row => {
 - 症状：子代理报告 CamoFox 连接失败
 - 解决：在当前会话中重启服务，然后继续处理
 
+### 子代理超时后的主会话恢复
+
+当子代理超时（600s 限制）或未能生成输出文件时，主会话可以直接接管剩余批次：
+
+1. **检测未完成的批次**：检查输出目录中缺失对应的 `bio_updates_batchN.jsonl` 文件
+2. **静默 HTTP 提取（推荐）**：对提供静态 HTML 的实验室（Drupal 站如 MIT CSAIL），用 Python urllib/requests 并发抓取，无需启动浏览器：
+   ```python
+   from urllib.request import urlopen, Request
+   import re, json, html as html_mod
+   for person in batch:
+       req = Request(person['source_detail_url'], headers={'User-Agent': 'Mozilla/5.0'})
+       with urlopen(req, timeout=30) as resp:
+           page = resp.read().decode('utf-8')
+       m = re.search(r'field--name-field-title[^>]*>\s*(.*?)\s*</div>', page)
+       if m: person['role_raw'] = html_mod.unescape(m.group(1)).strip()
+   ```
+3. **浏览器 fallback**：HTTP 超时（CSAIL 服务器有时很慢）时，对特定页面回退到 `browser_navigate`
+4. **直接写输出**：结果写入 `bio_updates_batchN.jsonl`，继续合并流程
+5. **无需重启子代理**：主会话直接处理比启动新子代理更省 LLM token（避免子代理的完整提示词开销）
+
 ## 最佳实践总结
 
 1. **先批量提取列表页**：使用 JavaScript 从实验室人员页面一次性提取所有人员基础信息
@@ -161,3 +197,5 @@ rows.forEach(row => {
 4. **全面搜索更新文件**：合并前搜索所有可能的文件路径
 5. **增量合并**：每轮子代理完成后立即合并，避免重复工作
 6. **API 限制 fallback**：当子代理遇到 API 限制时，切换到当前会话使用 JavaScript 批量提取
+7. **工具调用预算**：预留 10-15 次调用给最终保存和报告；主会话接近上限时主动保存 checkpoint
+8. **进度汇报**：每完成一个子实验室或每处理 50 人，向用户汇报当前进度
