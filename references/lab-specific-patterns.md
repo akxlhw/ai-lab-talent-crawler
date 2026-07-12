@@ -359,3 +359,19 @@ http://www.lamda.nju.edu.cn/images/pub/lamda.png
 5. **Faculty 页面 URL 无斜杠**: 教师主页如 `gaow` 可能重定向到 `gaow/`，两种形式都试
 6. **邮件混淆**: 教工页面使用 `(at)` 和 `(dot)` 混淆，需要还原；PhD 页面通常直接显示
 7. **输出格式**: 单一 JSONL 文件，第一行 `type=lab` 记录包含 logo_url，后续每行 `type=person` 人员记录
+
+### 往届毕业生提取（Alumni）
+- **页面**: `http://www.lamda.nju.edu.cn/CH.previous_people_alumni.ashx`
+- **结构**: 每人三行文本：
+  ```
+  姓名
+  YYYY博士/硕士毕业
+  现在：当前去向
+  ```
+- **采集方法**: 使用 BeautifulSoup `get_text('\n', strip=True)` 得到行列表，遍历匹配 `^\d{4}(博士|硕士)毕业$` 的行，前一行是姓名，后一行是当前去向（若以 "现在：" 开头）
+- **主页链接**: 同页中的 `<a>` 标签以姓名为文字指向个人主页，建立 name → homepage 映射
+- **输出字段**: `role_section="Alumni"`, `role_raw="YYYY 博士/硕士 毕业"`, `cohort_year=YYYY`, `current_position="..."`
+- **重叠处理**: 部分现任教师/即将毕业博士同时出现在 Alumni 列表中（如 2025/2026 应届生）。保留多条记录，分别标记 `Faculty`/`PhD Students` 和 `Alumni`，导入时可按名字合并
+
+### 验证记录
+2026-07 从校友页提取了 445 位毕业生（博士 87 + 硕士 358），覆盖 2004-2026 年。

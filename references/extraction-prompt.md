@@ -71,7 +71,13 @@
 1. name：必填。页面上该人的姓名。
 2. role_raw：页面上写的完整职位/头衔原文。这是精确身份（区别于列表页的粗分区）。
 3. email：邮箱地址。注意可能被混淆（如 "john [at] stanford [dot] edu"），还原为标准格式。
-4. research_areas：研究方向关键词列表。只从明确列出的提取。
+4. research_areas：研究方向关键词列表。从 "Research Interests" / "About Me" / "Biography" 等区块中提取，
+   必须清洁干净：
+   - 先将 HTML 标签（如 `<strong>`, `<em>`）和 HTML 实体（如 `&nbsp;`, `&amp;`, `&quot;`）转换为普通文本
+   - 删除过渡性短语（如 "More specifically", "More generally", "In particular", "I am interested in", "such as"）
+   - 不要拼接出来的英文句子片段，只提取真正的研究领域名词（如 "Machine Learning", "Computer Vision", "Reinforcement Learning"）
+   - 如果是一串长文字（比如 "My research interests include A, B, and C"), 先抽出后面的列表部分，
+     再按逗号/分号/换行拆分成数组
 5. cohort_year（PhD 届别）——只从明确表述提取，例如：
    - "PhD since 2020" / "PhD candidate since 2021" → cohort_year=2020/2021
    - "joined the lab in 2022" → cohort_year=2022
