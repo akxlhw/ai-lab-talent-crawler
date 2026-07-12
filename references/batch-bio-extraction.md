@@ -624,6 +624,51 @@ for i, person in enumerate(people):
 
 **Trade-off vs single-reusable-tab:** ~2s overhead per person (tab creation + close) vs ~0.5s navigate within an existing tab. For 25 people, the difference is ~50s vs ~12s — acceptable headroom for robustness.
 
+## ⚠️ BeautifulSoup get_text() &lt;a&gt;-tag Line-Splitting Pitfall
+
+When a page uses a table layout with inline `<a>` tags — common in Chinese lab personal pages (LAMDA, etc.) — BeautifulSoup's `get_text('\n', strip=True)` **splits `<a>` tag text onto separate lines** from the text that precedes the tag:
+
+```html
+Supervisor: Professor<a href="...">Yang Yu</a><br>
+```
+
+becomes:
+
+```
+Supervisor: Professor
+Yang Yu
+```
+
+not:
+
+```
+Supervisor: Professor Yang Yu
+```
+
+This means a regex like `Supervisor:\s*(.+)` on the clean text will only capture `Professor`, not the full name. This explains why naive HTTP extraction finds **0-40%** advisor coverage while Camofox (which reads `document.body.innerText` from the browser) finds **70%+** — the browser preserves inline text flow correctly.
+
+**Three mitigation strategies (use in order):**
+
+1. **Camofox evaluate** — `document.body.innerText` returns text exactly as the browser renders it (inline, not split by `<a>`). Use the `/evaluate` endpoint.
+
+2. **Multi-line fusion** — After finding `Supervisor:`, check the next line if the current line only captured a title fragment:
+   ```python
+   m = re.search(r'Supervisor:\s*(.+)', line)
+   adv = m.group(1).strip()
+   if adv in ('Professor', 'Prof', 'Associate', 'Associate Professor'):
+       adv = lines[i + 1].strip()  # pick up next line
+   info['advisor'] = adv
+   ```
+
+3. **Raw HTML regex** — Parse directly against HTML with `<a>` tags inline:
+   ```python
+   m = re.search(r'Supervisor:\s*(?:Prof\.?\s*)?(?:<[^>]+>)*([^<>\n]+?)(?:\s*<br|\s*Co-supervisor)', html, re.IGNORECASE)
+   ```
+
+A reusable script demonstrating all three is at `scripts/extract_advisor_via_camofox.py`.
+
+---
+
 ### Pitfall: HTML Entity Encoding in Drupal Pages
 
 CSAIL's Drupal 10 renders `&amp;` for ampersands in research area names (e.g., `&quot;Graphics &amp; Vision&quot;`). After extraction, always decode entities with `html.unescape()`:

@@ -64,7 +64,9 @@
   "email": "邮箱地址（如有）",
   "research_areas": ["研究方向1", "研究方向2"],
   "cohort_year": 2020,
-  "cohort_source": "来源类型:原文片段"
+  "cohort_source": "来源类型:原文片段",
+  "advisor": "导师姓名（如有）",
+  "co_advisor": "共同导师姓名（如有）"
 }
 
 字段规则：
@@ -84,8 +86,8 @@
    - "2020–present" 在教育经历里 → cohort_year=2020
    禁止从论文发表年份推断入学年份（不可靠）。
    找不到明确表述 → 省略 cohort_year 和 cohort_source 两个字段。
-7. **advisor / co_advisor**：从页面中提取导师信息。通常在 "Supervisor:" 或 "导师:" 后的人物姓名。也接受 "Co-supervisor:"。注意姓名可能被 `<a>` 标签分隔在下一行，优先使用页面中的纯文本提取，还原为完整姓名（如 "Yang Yu" 而非残缺的 "essor"）。
-8. 当页面包含表格结构（如 statsml 的 Post-Docs 列表），优先使用 JavaScript 提取：
+6. **advisor / co_advisor**：从页面中提取导师信息。通常在 "Supervisor:" 或 "导师:" 后的人物姓名。也接受 "Co-supervisor:"。注意姓名可能被 `<a>` 标签分隔在下一行，优先使用页面中的纯文本提取，还原为完整姓名（如 "Yang Yu" 而非残缺的 "essor"）。如果页面明确标注多人指导，填写 `co_advisor`。
+7. 当页面包含表格结构（如 statsml 的 Post-Docs 列表），优先使用 JavaScript 提取：
    ```javascript
    Array.from(document.querySelectorAll('table tr')).slice(1).map(row => {
      const cells = row.querySelectorAll('td');
@@ -93,7 +95,6 @@
    }).filter(x => x && x.name)
    ```
    这比 LLM 从 accessibility tree 提取更准确，尤其是包含 cohort_year 和 advisor 等结构化数据时。
-
 8. 对于跨子实验室重复出现的人员（如同时属于 NLP Group 和 statsml），保留所有记录但标注 parent_lab 为同一主实验室。去重时以 name 为键，保留信息最完整的记录。
 ```
 

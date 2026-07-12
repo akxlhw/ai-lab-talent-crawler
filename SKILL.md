@@ -66,14 +66,10 @@ description: |
    - 记录姓名、毕业年份、学位（博士/硕士）、当前去向、个人主页
    - `role_section` 填 `"Alumni"`，`role_raw` 填 `YYYY 博士/硕士 毕业`
    - 与当前教师/学生重叠时保留多条记录（同一人可同时是 Alumnus 和 Faculty），在报告中标注重叠数量
-   - 注意：部分教授页面（如 Andrew Ng）可能需要登录，遇到登录墙则跳过并记录
-   - 部分页面（如 Stanford CS 系的 profiles）可直接访问，应优先跟进这些页面获取完整信息
-   - 对于大量人员（>100人），使用批量脚本自动化跟进，优先处理有 homepage 的人员
-   - 无 homepage 的人员可通过实验室 profiles 系统或 CS 系人员页面补充信息
-   - **大规模 bio 跟进策略**：当剩余待跟进人数 >50 时，优先使用 `references/large-scale-bio-followup.md` 中的并行子代理方案，将人员分成每批 15-30 人的小批次并发处理，避免单会话和单子代理的工具调用上限
-4. 有分页 → 浏览器翻页 → 继续
-5. 有子实验室 → 跟进其 people 页 → 继续
-6. 累积所有人员
+5. **advisor / co_advisor 采集**：从每个人员的 bio 详情页提取导师/指导老师信息（Supervisor/Co-supervisor 行），写入 `advisor` 和 `co_advisor` 字段。注意姓名可能被 `<a>` 标签分隔成多行，需合并还原为完整姓名。
+6. 有分页 → 浏览器翻页 → 继续（跳转步骤 1）
+7. 有子实验室 → 跟进其 people 页 → 继续（跳转步骤 1）
+8. 累积所有人员
 
 ### 阶段四：应对工具调用上限与断点续采
 
@@ -107,7 +103,6 @@ Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任
 **仅输出一个 JSONL 文件**供人才库导入：`output/<lab_slug>/_YYYY-MM-DD.jsonl`
 - 第一行为 `"type": "lab"` 记录，包含 `lab_name`, `lab_slug`, `homepage`, `logo_url` 等实验室级字段
 - 后续每行为 `"type": "person"` 记录，不输出单独的 `_lab_info.json`
-- 标准格式见 `templates/import-jsonl.jsonl`
 - 写完成报告：`<cwd>/output/<lab_slug>/_report_YYYY-MM-DD.md`（人数/角色分布/质量提示/异常）
 - 写探索路径：`<cwd>/output/<lab_slug>/_crawl_path_YYYY-MM-DD.md`（入口/跳转链/跳过决策）
 - 主动同步 Skill 修改：如果本次采集改变了 skill 本身（如 labs.yaml、schema、采集策略），最后必须按 `references/github-skill-sync.md` 将 skill 文件推送到远端 GitHub 仓库（保留 `output/` 在本地，不上传），并在报告中注明 commit hash
@@ -157,6 +152,7 @@ For **MIT CSAIL** (and other labs serving clean server-rendered HTML like Drupal
 | lab_logo_url 默认收录 | 从实验室主域名提取 logo URL，写入 JSONL 第一行 `type=lab` 记录，供实验室卡片展示 |
 | lab_info 默认收录 | 从首页提取实验室简介（`description`）、核心研究方向（`research_focus`）和具体研究方向列表（`current_research_directions`），写入 `type=lab` 记录 |
 | 往届毕业生默认采集 | 主动寻找 `Alumni / 往届研究生` 页面，一律采集往届博士/硕士毕业生，`role_section="Alumni"`，与当前身份重叠时保留多条记录 |
+| advisor 默认收录 | 从 bio 详情页提取 Supervisor/Co-supervisor 信息，写入 `advisor` / `co_advisor` 字段，注意姓名可能被 `<a>` 标签分隔成多行，需合并还原 |
 | 不伪造字段 | 提取不到的字段直接省略（不写 null/空串/猜测值） |
 | 每页提取校验 | LLM 输出的每人 JSON 必须含 name 字段，否则丢弃该条 |
 | robots.txt 遵守 | 访问前检查，disallow 则跳过该路径 |
