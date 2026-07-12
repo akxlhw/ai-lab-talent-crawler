@@ -100,12 +100,12 @@ Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任
    - 每个 turn 结束时保存进度并给出阶段性报告
 
 ### 输出
-**仅输出一个 JSONL 文件**供人才库导入：
-1. 写 JSONL：`<cwd>/output/<lab_slug>/_YYYY-MM-DD.jsonl`（schema 见 `references/output-schema.md`）
-2. 实验室级信息（`lab_logo_url`, `lab_homepage`, `lab_name`, `parent_lab`）以去心化形式写入每行人员记录
-3. 写完成报告：`<cwd>/output/<lab_slug>/_report_YYYY-MM-DD.md`（人数/角色分布/质量提示/异常）
-4. 写探索路径：`<cwd>/output/<lab_slug>/_crawl_path_YYYY-MM-DD.md`（入口/跳转链/跳过决策）
-5. 主动同步 Skill 修改：如果本次采集改变了 skill 本身（如 labs.yaml、schema、采集策略），最后必须按 `references/github-skill-sync.md` 将 skill 文件推送到远端 GitHub 仓库（保留 `output/` 在本地，不上传），并在报告中注明 commit hash
+**仅输出一个 JSONL 文件**供人才库导入：`output/<lab_slug>/_YYYY-MM-DD.jsonl`
+- 第一行为 `"type": "lab"` 记录，包含 `lab_name`, `lab_slug`, `homepage`, `logo_url` 等实验室级字段
+- 后续每行为 `"type": "person"` 记录，不输出单独的 `_lab_info.json`
+- 写完成报告：`<cwd>/output/<lab_slug>/_report_YYYY-MM-DD.md`（人数/角色分布/质量提示/异常）
+- 写探索路径：`<cwd>/output/<lab_slug>/_crawl_path_YYYY-MM-DD.md`（入口/跳转链/跳过决策）
+- 主动同步 Skill 修改：如果本次采集改变了 skill 本身（如 labs.yaml、schema、采集策略），最后必须按 `references/github-skill-sync.md` 将 skill 文件推送到远端 GitHub 仓库（保留 `output/` 在本地，不上传），并在报告中注明 commit hash
 
 其中 `<cwd>` 是启动 Hermes 时的当前工作目录。这样每次项目的数据都保存在项目自己的目录下，不会和 skill 代码混在一起。脚本 `scripts/crawl.py` 中的 `resolve_output_dir` 函数已封装该逻辑：显式传入 `output_dir` 时使用该值，否则使用 `Path.cwd() / "output"`。
 
