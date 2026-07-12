@@ -73,7 +73,7 @@ Most faculty pages have a `heading "PI Core/Dual" [level=4]` tag. However:
    - "Human-Computer Interaction"
    - "Robotics"
 
-   **IMPORTANT**: Many CSAIL pages have NO "Research Areas" section at all. Leave `research_areas` as an empty list when absent — do not infer from bio text. Some pages also have an **"Impact Areas"** section (distinct from Research Areas) listing application domains like "Big Data", "Cybersecurity", "Manufacturing", "Education", "Entertainment", "Internet of Things", "Wireless".
+   **IMPORTANT**: Many CSAIL pages have NO "Research Areas" section at all. Leave `research_areas` as an empty list when absent — do not infer from bio text. Some pages also have an **"Impact Areas"** section (distinct from Research Areas) listing application domains like "Big Data", "Cybersecurity", "Manufacturing", "Education", "Entertainment", "Internet of Things", "Transportation", "Health Care", "Wireless".
 
    **CSS selector alternatives — two class patterns exist on CSAIL**: Research area links may appear under either (or both) of these CSS selectors:
    - `.research-areas .field--name-field-research-area a` (Drupal field system)
@@ -81,11 +81,11 @@ Most faculty pages have a `heading "PI Core/Dual" [level=4]` tag. However:
 
    When using BeautifulSoup, prefer the broader selector `.area-tags` or combine both via `soup.select('.area-tags a, .research-areas a')`. The Drupal field selector may miss results on pages that only use the theme-level `.area-tags` class.
 
-   **Hidden taxonomy term links**: On some pages (especially Group pages and Format A student pages), research area taxonomy links exist in the HTML but are NOT visible in the browser accessibility snapshot — they're rendered in a non-visible sidebar metadata block. `browser_snapshot` will miss them entirely. When scraping programmatically, these can still be extracted via `browser_console` using `document.querySelectorAll('a[href*="taxonomy/term/"]')`, or in BeautifulSoup by searching for any `<a href="/taxonomy/term/N">` in the full page HTML. To distinguish research areas from impact areas (which use the same `/taxonomy/term/N` URL pattern), check the nearest preceding `<h4>` heading or use the term IDs directly:
+   **Hidden taxonomy term links**: On some pages (especially Group pages and Format A student pages), research area taxonomy links exist in the HTML but are NOT visible in the browser accessibility snapshot — they're rendered in a non-visible sidebar metadata block. `browser_snapshot` will miss them entirely. When scraping programmatically, these can still be extracted via `browser_console` using `document.querySelectorAll('a[href*="taxonomy/term/"]')`, or in BeautifulSoup by searching for any `<a href="/taxonomy/term/N">` in the full page HTML. To distinguish research areas from impact areas (which use the same `/taxonomy/term/N` URL pattern), check the nearest preceding `<h4>` heading or use the term IDs directly. **The term IDs below were verified in production (2026-07-12); earlier skill versions had outdated IDs:**
 
-   - Research Area term IDs: `9` (AI & ML), `10` (Algorithms & Theory), `11` (Computer Architecture), `12` (Computational Biology), `13` (Systems & Networking), `14` (Programming Languages & Software Engineering), `15` (Human-Computer Interaction), `16` (Graphics & Vision), `17` (Robotics), `18` (Security & Cryptography)
+   - Research Area term IDs: `9` (AI & ML), `14` (Algorithms & Theory), `11` (Computer Architecture), `12` (Computational Biology), `13` (Systems & Networking), `18` (Programming Languages & Software Engineering), `20` (Human-Computer Interaction), `17` (Graphics & Vision), `15` (Robotics), `25` (Security & Cryptography)
 
-   - Impact Area term IDs: `3` (Big Data), `4` (Cybersecurity), `5` (Education), `6` (Entertainment), `7` (Internet of Things), `8` (Manufacturing), `19` (Wireless)
+   - Impact Area term IDs: `3` (Big Data), `4` (Cybersecurity), `5` (Education), `6` (Entertainment), `7` (Internet of Things), `8` (Manufacturing), `19` (Wireless), `21` (Transportation), `26` (Internet of Things), `27` (Health Care)
 
    **Production extraction strategy** (proven across Batches 17 and 18): Use three extraction methods in order of specificity, aggregating results from each:
 
@@ -431,7 +431,7 @@ When following up bio details for 25+ people across CSAIL:
      All 17 are "Graduate Student" — zero role diversity. Marianne Rakic had group-level areas from CAML group card (AI & ML, Graphics & Vision). No homepages found.
    Research areas range: 2-10/25 (8-40%) in larger batches; Batch 23 at 1/17 (~6%) extends the low end for research_areas. Homepage range: 0-9/25 (0-36%) — Batch 23 at 0/17 is the first batch with zero homepages found. Cohort_year is consistently 0/25 across all batches — never available for graduate students from the CSAIL page alone.
 
-### Additional Fields: room, social, teaser
+### Additional Fields: room, social, teaser, logo
 
 Beyond the core fields above, CSAIL person pages may contain:
 
@@ -446,6 +446,8 @@ Beyond the core fields above, CSAIL person pages may contain:
 - **teaser** (`field--name-field-teaser-text`): A short subtitle shown in listing cards, not the main page. May contain a research group name or lab tagline. Example: "FutureTech Research Group", "Our goal is to enable artificial intelligence..." (shared by multiple students in the same group). This is the same text for all members of a group and is NOT a personal bio — do not conflate with `description`.
 
 - **description** (`field--name-field-description`): The personal bio paragraph. Only ~3% of graduate student pages have this (compared to ~60% of faculty). When present, it's the best source for cohort_year extraction.
+
+- **Lab logo**: The CSAIL site uses an inline SVG logo in the header and does not expose a standalone PNG/JPG logo file. For `logo_url` extraction, fall back to the favicon (`/themes/custom/csail/images/favicon.ico`) or save the inline SVG as a local asset. Do not use the MIT Schwarzman College of Computing logo (`SCC-white.png` / `SCC-black.png`) as the CSAIL logo.
 
 ### Cohort Year Extraction from Descriptions
 
