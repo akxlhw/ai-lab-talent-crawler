@@ -42,7 +42,7 @@ description: |
 ### 阶段一：入口发现
 1. 从 `labs.yaml` 匹配目标实验室，获取其主域名
 2. 浏览器 navigate → 主域名
-3. **同步提取实验室 logo**：使用 `references/lab-logo-extraction.md` 中的优先级策略，从主页提取 `logo_url`
+3. **同步提取实验室 logo 和简介**：使用 `references/lab-logo-extraction.md` 中的优先级策略，从主页提取 `logo_url`。同时从首页 About/Introduction 区块提取实验室简介（`description`）、核心研究方向（`research_focus`）和当前具体研究方向列表（`current_research_directions`），写入 `type=lab` 记录。
 4. 浏览器 snapshot → LLM 分析页面导航和链接
 5. 目标：找到 People/Faculty/Team/Members/Research Groups 类页面入口
 6. 详细的链接判定规则见 `references/entry-discovery.md`
@@ -155,6 +155,7 @@ For **MIT CSAIL** (and other labs serving clean server-rendered HTML like Drupal
 | bio 详情全量跟进 | 列表页每个人都跟进其 bio 详情页；不采样、不限制；用户明确有充足 API 额度时，应完整跟进所有人员 |
 | photo_url 默认收录 | 从每个人员的个人主页提取头像照片URL（第一个非Logo图片），写入 photo_url 字段，不下载图片 |
 | lab_logo_url 默认收录 | 从实验室主域名提取 logo URL，写入 JSONL 第一行 `type=lab` 记录，供实验室卡片展示 |
+| lab_info 默认收录 | 从首页提取实验室简介（`description`）、核心研究方向（`research_focus`）和具体研究方向列表（`current_research_directions`），写入 `type=lab` 记录 |
 | 往届毕业生默认采集 | 主动寻找 `Alumni / 往届研究生` 页面，一律采集往届博士/硕士毕业生，`role_section="Alumni"`，与当前身份重叠时保留多条记录 |
 | 不伪造字段 | 提取不到的字段直接省略（不写 null/空串/猜测值） |
 | 每页提取校验 | LLM 输出的每人 JSON 必须含 name 字段，否则丢弃该条 |

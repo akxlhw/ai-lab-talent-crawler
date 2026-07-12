@@ -40,6 +40,9 @@ output/<lab_slug>/_YYYY-MM-DD.jsonl
 | `lab_name` | ✅ | string | 实验室中文/英文名 |
 | `lab_slug` | ✅ | string | labs.yaml 中的 slug |
 | `homepage` | ✅ | string | 实验室官网 |
+| `description` | 可选 | string | 实验室简介（从首页 About/Intro 区块提取） |
+| `research_focus` | 可选 | string | 实验室核心研究方向概述（如 "机器学习、数据挖掘、模式识别"） |
+| `current_research_directions` | 可选 | array[string] | 当前具体研究方向的列表（如 ["集成学习", "半监督与主动学习"]） |
 | `logo_url` | 可选 | string | 实验室 logo URL（供实验室卡片展示） |
 | `collected_at` | ✅ | string | ISO8601 采集时间戳 |
 
@@ -61,7 +64,7 @@ output/<lab_slug>/_YYYY-MM-DD.jsonl
 单个 JSONL 文件以 `"type": "lab"` 记录开头，后跟多个 `"type": "person"` 记录：
 
 ```json
-{"type":"lab","lab_name":"Stanford AI Lab","lab_slug":"stanford_ai_lab","homepage":"https://ai.stanford.edu/","logo_url":"https://ai.stanford.edu/static/logo.png","collected_at":"2026-06-29T11:04:00Z"}
+{"type":"lab","lab_name":"Stanford AI Lab","lab_slug":"stanford_ai_lab","homepage":"https://ai.stanford.edu/","description":"Stanford AI Lab is...","research_focus":"Machine Learning, Computer Vision, NLP, Robotics","current_research_directions":["Reinforcement Learning","Graph Neural Networks","Foundation Models"],"logo_url":"https://ai.stanford.edu/static/logo.png","collected_at":"2026-06-29T11:04:00Z"}
 {"type":"person","name":"Aryaman Arora","role_section":"PhD Students","role_raw":"PhD Candidate","homepage":"https://aryaman.io/","department":"Computer Science","cohort_year":2020,"cohort_source":"bio_detail:\"PhD since 2020\"","lab_name":"Stanford NLP Group","parent_lab":"Stanford AI Lab","source_url":"https://nlp.stanford.edu/people/","source_detail_url":"https://aryaman.io/","photo_url":"https://aryaman.io/photo.jpg","collected_at":"2026-06-29T11:04:00Z"}
 ```
 
