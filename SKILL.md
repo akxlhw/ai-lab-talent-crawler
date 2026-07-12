@@ -67,9 +67,14 @@ description: |
    - `role_section` 填 `"Alumni"`，`role_raw` 填 `YYYY 博士/硕士 毕业`
    - 与当前教师/学生重叠时保留多条记录（同一人可同时是 Alumnus 和 Faculty），在报告中标注重叠数量
 5. **advisor / co_advisor 采集**：从每个人员的 bio 详情页提取导师/指导老师信息（Supervisor/Co-supervisor 行），写入 `advisor` 和 `co_advisor` 字段。注意姓名可能被 `<a>` 标签分隔成多行，需合并还原为完整姓名。
-6. 有分页 → 浏览器翻页 → 继续（跳转步骤 1）
-7. 有子实验室 → 跟进其 people 页 → 继续（跳转步骤 1）
-8. 累积所有人员
+6. **师生关系数据全量拆解**：若人员列表页含有 `teachers_students` / `faculty_students` / 类似 JavaScript 数组，
+   必须解析并构建 **导师 → 学生** 映射：
+   - 从教师的学生列表（博士、硕士、Alumni）中建立 `advisor` 字段
+   - 应用于所有角色：在读博士生、在读硕士、Alumni
+   - 与 bio 页面提取的 `Supervisor` 信息互相校验，形成 `co_advisor` 或弥补
+7. 有分页 → 浏览器翻页 → 继续
+8. 有子实验室 → 跟进其 people 页 → 继续
+9. 累积所有人员
 
 ### 阶段四：应对工具调用上限与断点续采
 
