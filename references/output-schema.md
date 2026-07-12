@@ -29,6 +29,7 @@ output/<lab_slug>/_YYYY-MM-DD.jsonl
 | `source_url` | ✅ | string | 采集该人员的列表页 URL |
 | `source_detail_url` | 可选 | string | bio 详情页 URL（若 agent 进了详情页） |
 | `photo_url` | 可选 | string | 个人主页头像照片URL（从bio详情页或列表页提取） |
+| `current_position` | 可选 | string | Alumni 专用：当前工作/去向（如 "腾讯，北京" 或 "后续深造"） |
 | `collected_at` | ✅ | string | ISO8601 采集时间戳（如 "2026-06-29T11:04:00Z"） |
 
 ### `lab` 类型记录字段

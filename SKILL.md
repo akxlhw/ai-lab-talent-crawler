@@ -62,6 +62,10 @@ description: |
 2. 每个人记录：name / role_section / homepage / department / **photo_url**（列表页字段）
 3. **bio 详情全量跟进**：每个人的 bio 链接都跟进，补充 role_raw / cohort_year / email / research_areas（详见 extraction-prompt.md 的 bio 提取部分）
    - 同时提取 **photo_url**：从个人主页找到头像照片URL（第一个非Logo、尺寸>80px的图片）
+4. **往届毕业生采集**：主动寻找 `Previous People / Alumni / 往届研究生` 类页面，一律采集：
+   - 记录姓名、毕业年份、学位（博士/硕士）、当前去向、个人主页
+   - `role_section` 填 `"Alumni"`，`role_raw` 填 `YYYY 博士/硕士 毕业`
+   - 与当前教师/学生重叠时保留多条记录（同一人可同时是 Alumnus 和 Faculty），在报告中标注重叠数量
    - 注意：部分教授页面（如 Andrew Ng）可能需要登录，遇到登录墙则跳过并记录
    - 部分页面（如 Stanford CS 系的 profiles）可直接访问，应优先跟进这些页面获取完整信息
    - 对于大量人员（>100人），使用批量脚本自动化跟进，优先处理有 homepage 的人员
@@ -150,7 +154,8 @@ For **MIT CSAIL** (and other labs serving clean server-rendered HTML like Drupal
 | 跳过非人员页面 | twitter/github/会议/PDF/新闻/博客 → LLM 判定后跳过 |
 | bio 详情全量跟进 | 列表页每个人都跟进其 bio 详情页；不采样、不限制；用户明确有充足 API 额度时，应完整跟进所有人员 |
 | photo_url 默认收录 | 从每个人员的个人主页提取头像照片URL（第一个非Logo图片），写入 photo_url 字段，不下载图片 |
-| lab_logo_url 默认收录 | 从实验室主域名提取 logo URL，放在 JSONL 第一行 `type=lab` 记录中的 `logo_url` 字段，供实验室卡片展示 |
+| lab_logo_url 默认收录 | 从实验室主域名提取 logo URL，写入 JSONL 第一行 `type=lab` 记录，供实验室卡片展示 |
+| 往届毕业生默认采集 | 主动寻找 `Alumni / 往届研究生` 页面，一律采集往届博士/硕士毕业生，`role_section="Alumni"`，与当前身份重叠时保留多条记录 |
 | 不伪造字段 | 提取不到的字段直接省略（不写 null/空串/猜测值） |
 | 每页提取校验 | LLM 输出的每人 JSON 必须含 name 字段，否则丢弃该条 |
 | robots.txt 遵守 | 访问前检查，disallow 则跳过该路径 |
