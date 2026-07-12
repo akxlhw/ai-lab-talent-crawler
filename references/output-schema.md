@@ -28,6 +28,8 @@ output/<lab_slug>/_YYYY-MM-DD.jsonl
 | `source_url` | ✅ | string | 采集该人员的列表页 URL |
 | `source_detail_url` | 可选 | string | bio 详情页 URL（若 agent 进了详情页） |
 | `photo_url` | 可选 | string | 个人主页头像照片URL（从bio详情页或列表页提取） |
+| `lab_logo_url` | 可选 | string | 所属实验室 logo URL（从实验室主页提取，供实验室卡片展示） |
+| `lab_homepage` | 可选 | string | 所属实验室官网 |
 | `collected_at` | ✅ | string | ISO8601 采集时间戳（如 "2026-06-29T11:04:00Z"） |
 
 ## 关键规则
@@ -38,37 +40,21 @@ output/<lab_slug>/_YYYY-MM-DD.jsonl
    - `role_section` 来自页面分区（粗分类，用于 role_type 映射）
    - `role_raw` 来自 bio 详情页（精确头衔，用于展示）
    - 两者独立，列表页只有 role_section，进了 bio 才有 role_raw
-4. **photo_url 默认收录**：从每个人员的 bio 详情页/个人主页提取头像照片URL。使用浏览器或HTTP请求找到页面上第一个非Logo/非导航的图片（尺寸>80px），记录其完整URL。不下载图片本身。
-4. **cohort_year 只从明确表述提取**（"PhD since 2020"/"joined in 2021"），禁止从论文年份推断。提取到 cohort_year 必须同时填 cohort_source。
-5. **lab_name vs parent_lab**：一个 SAIL 下有多个子实验室（NLP/SNAP/Ermon），parent_lab 始终是顶层实验室名。
+4. **photo_url 默认收录**：从每个人员的 bio 详情页/个人主页提取头像照片URL，使用浏览器或HTTP请求找到页面上第一个非Logo/非导航的图片（尺寸>80px），记录其完整URL。不下载图片本身。
+5. **lab_logo_url 展开到每人记录**：为了让人才库导入时只需要一个 JSONL 文件，将实验室级的 `lab_logo_url` 和 `lab_homepage` 以及标准化的 `lab_name`/`parent_lab` 写入每一行人员记录。不单独维护 `_lab_info.json`。
+6. **cohort_year 只从明确表述提取**（"PhD since 2020"/"joined in 2021"），禁止从论文年份推断。提取到 cohort_year 必须同时填 cohort_source。
+7. **lab_name vs parent_lab**：一个 SAIL 下有多个子实验室（NLP/SNAP/Ermon），parent_lab 始终是顶层实验室名；对于没有子实验室的单一实验室，`lab_name` 与 `parent_lab` 相同。
 
 ## 示例（一行 JSONL）
 
 ```json
-{"name":"Aryaman Arora","role_section":"PhD Students","role_raw":"PhD Candidate","homepage":"https://aryaman.io/","department":"Computer Science","cohort_year":2020,"cohort_source":"bio_detail:\"PhD since 2020\"","lab_name":"Stanford NLP Group","parent_lab":"Stanford AI Lab","source_url":"https://nlp.stanford.edu/people/","source_detail_url":"https://aryaman.io/","photo_url":"https://aryaman.io/photo.jpg","collected_at":"2026-06-29T11:04:00Z"}
+{"name":"Aryaman Arora","role_section":"PhD Students","role_raw":"PhD Candidate","homepage":"https://aryaman.io/","department":"Computer Science","cohort_year":2020,"cohort_source":"bio_detail:\"PhD since 2020\"","lab_name":"Stanford NLP Group","parent_lab":"Stanford AI Lab","source_url":"https://nlp.stanford.edu/people/","source_detail_url":"https://aryaman.io/","photo_url":"https://aryaman.io/photo.jpg","lab_logo_url":"https://ai.stanford.edu/static/logo.png","lab_homepage":"https://ai.stanford.edu/","collected_at":"2026-06-29T11:04:00Z"}
 ```
 
-## 实验室元数据（Lab metadata）
+## 输出文件
 
-除人员 JSONL 外，每次采集还应输出一个实验室级元数据文件 `output/<lab_slug>/_lab_info.json`：
-
-```json
-{
-  "lab_name": "南京大学LAMDA实验室",
-  "lab_slug": "lamda_lab",
-  "homepage": "http://www.lamda.nju.edu.cn/",
-  "logo_url": "http://www.lamda.nju.edu.cn/images/pub/lamda.png",
-  "collected_at": "2026-06-29T11:04:00Z"
-}
-```
-
-| 字段 | 必填 | 类型 | 说明 |
-|------|------|------|------|
-| `lab_name` | ✅ | string | 实验室中文/英文名 |
-| `lab_slug` | ✅ | string | labs.yaml 中的 slug |
-| `homepage` | ✅ | string | 实验室官网 |
-| `logo_url` | 可选 | string | 实验室 logo URL（供实验室卡片展示） |
-| `collected_at` | ✅ | string | ISO8601 采集时间戳 |
+**仅输出一个 JSONL 文件**供人才库导入：`output/<lab_slug>/_YYYY-MM-DD.jsonl`。
+实验室级的 logo、官网等信息以去心化形式写入每一行人员记录，不单独输出 `_lab_info.json`。
 
 ## 质量校验（写完 JSONL 后自检）
 

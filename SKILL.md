@@ -100,10 +100,12 @@ Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任
    - 每个 turn 结束时保存进度并给出阶段性报告
 
 ### 输出
+**仅输出一个 JSONL 文件**供人才库导入：
 1. 写 JSONL：`<cwd>/output/<lab_slug>/_YYYY-MM-DD.jsonl`（schema 见 `references/output-schema.md`）
-2. 写实验室元数据：`<cwd>/output/<lab_slug>/_lab_info.json`，包含 `lab_name`, `homepage`, `logo_url` 等（供实验室卡片展示）
+2. 实验室级信息（`lab_logo_url`, `lab_homepage`, `lab_name`, `parent_lab`）以去心化形式写入每行人员记录
 3. 写完成报告：`<cwd>/output/<lab_slug>/_report_YYYY-MM-DD.md`（人数/角色分布/质量提示/异常）
 4. 写探索路径：`<cwd>/output/<lab_slug>/_crawl_path_YYYY-MM-DD.md`（入口/跳转链/跳过决策）
+5. 主动同步 Skill 修改：如果本次采集改变了 skill 本身（如 labs.yaml、schema、采集策略），最后必须按 `references/github-skill-sync.md` 将 skill 文件推送到远端 GitHub 仓库（保留 `output/` 在本地，不上传），并在报告中注明 commit hash
 
 其中 `<cwd>` 是启动 Hermes 时的当前工作目录。这样每次项目的数据都保存在项目自己的目录下，不会和 skill 代码混在一起。脚本 `scripts/crawl.py` 中的 `resolve_output_dir` 函数已封装该逻辑：显式传入 `output_dir` 时使用该值，否则使用 `Path.cwd() / "output"`。
 
@@ -175,7 +177,8 @@ For **MIT CSAIL** (and other labs serving clean server-rendered HTML like Drupal
 - `references/browser-service-management.md` — Camofox/kimi-webbridge 服务启动、探活、故障处理
 - `references/lab-specific-patterns.md` — 各实验室页面结构特点和最佳采集策略（含 Stanford AI Lab 子实验室详细模式）
 - `references/large-scale-bio-followup.md` — 大规模 bio 详情页跟进策略和子代理并行方案
-- `references/photo-extraction.md` — 教授/学生照片提取（可选后处理）
+- `references/photo-extraction.md` — 从个人主页提取成员头像照片URL（默认字段，非可选）
+- `references/lab-logo-extraction.md` — 从实验室主页提取 logo URL（供实验室卡片展示）
 - `references/mit-csail-page-structure.md` — MIT CSAIL 人物详情页面结构，含角色提取规则和研究领域标签处理
 - `references/batch-bio-extraction.md` — 大规模 bio 详情页批量提取：Python + requests/BeautifulSoup 方案，比逐个浏览器导航快 5-10 倍，含 DOM 选择器参考表和服务超时处理
 - `references/github-skill-sync.md` — 将本 skill 同步到 GitHub 而不泄露 `output/` 数据
