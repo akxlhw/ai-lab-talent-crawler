@@ -103,6 +103,7 @@ Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任
 **仅输出一个 JSONL 文件**供人才库导入：`output/<lab_slug>/_YYYY-MM-DD.jsonl`
 - 第一行为 `"type": "lab"` 记录，包含 `lab_name`, `lab_slug`, `homepage`, `logo_url` 等实验室级字段
 - 后续每行为 `"type": "person"` 记录，不输出单独的 `_lab_info.json`
+- 标准格式见 `templates/import-jsonl.jsonl`
 - 写完成报告：`<cwd>/output/<lab_slug>/_report_YYYY-MM-DD.md`（人数/角色分布/质量提示/异常）
 - 写探索路径：`<cwd>/output/<lab_slug>/_crawl_path_YYYY-MM-DD.md`（入口/跳转链/跳过决策）
 - 主动同步 Skill 修改：如果本次采集改变了 skill 本身（如 labs.yaml、schema、采集策略），最后必须按 `references/github-skill-sync.md` 将 skill 文件推送到远端 GitHub 仓库（保留 `output/` 在本地，不上传），并在报告中注明 commit hash
@@ -149,7 +150,7 @@ For **MIT CSAIL** (and other labs serving clean server-rendered HTML like Drupal
 | 跳过非人员页面 | twitter/github/会议/PDF/新闻/博客 → LLM 判定后跳过 |
 | bio 详情全量跟进 | 列表页每个人都跟进其 bio 详情页；不采样、不限制；用户明确有充足 API 额度时，应完整跟进所有人员 |
 | photo_url 默认收录 | 从每个人员的个人主页提取头像照片URL（第一个非Logo图片），写入 photo_url 字段，不下载图片 |
-| lab_logo_url 默认收录 | 从实验室主域名提取 logo URL，写入 `_lab_info.json` 中的 logo_url，供实验室卡片展示 |
+| lab_logo_url 默认收录 | 从实验室主域名提取 logo URL，放在 JSONL 第一行 `type=lab` 记录中的 `logo_url` 字段，供实验室卡片展示 |
 | 不伪造字段 | 提取不到的字段直接省略（不写 null/空串/猜测值） |
 | 每页提取校验 | LLM 输出的每人 JSON 必须含 name 字段，否则丢弃该条 |
 | robots.txt 遵守 | 访问前检查，disallow 则跳过该路径 |
