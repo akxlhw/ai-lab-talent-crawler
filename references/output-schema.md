@@ -45,8 +45,30 @@ output/<lab_slug>/_YYYY-MM-DD.jsonl
 ## 示例（一行 JSONL）
 
 ```json
-{"name":"Aryaman Arora","role_section":"PhD Students","role_raw":"PhD Candidate","homepage":"https://aryaman.io/","department":"Computer Science","cohort_year":2020,"cohort_source":"bio_detail:\"PhD since 2020\"","lab_name":"Stanford NLP Group","parent_lab":"Stanford AI Lab","source_url":"https://nlp.stanford.edu/people/","source_detail_url":"https://aryaman.io/","collected_at":"2026-06-29T11:04:00Z"}
+{"name":"Aryaman Arora","role_section":"PhD Students","role_raw":"PhD Candidate","homepage":"https://aryaman.io/","department":"Computer Science","cohort_year":2020,"cohort_source":"bio_detail:\"PhD since 2020\"","lab_name":"Stanford NLP Group","parent_lab":"Stanford AI Lab","source_url":"https://nlp.stanford.edu/people/","source_detail_url":"https://aryaman.io/","photo_url":"https://aryaman.io/photo.jpg","collected_at":"2026-06-29T11:04:00Z"}
 ```
+
+## 实验室元数据（Lab metadata）
+
+除人员 JSONL 外，每次采集还应输出一个实验室级元数据文件 `output/<lab_slug>/_lab_info.json`：
+
+```json
+{
+  "lab_name": "南京大学LAMDA实验室",
+  "lab_slug": "lamda_lab",
+  "homepage": "http://www.lamda.nju.edu.cn/",
+  "logo_url": "http://www.lamda.nju.edu.cn/images/pub/lamda.png",
+  "collected_at": "2026-06-29T11:04:00Z"
+}
+```
+
+| 字段 | 必填 | 类型 | 说明 |
+|------|------|------|------|
+| `lab_name` | ✅ | string | 实验室中文/英文名 |
+| `lab_slug` | ✅ | string | labs.yaml 中的 slug |
+| `homepage` | ✅ | string | 实验室官网 |
+| `logo_url` | 可选 | string | 实验室 logo URL（供实验室卡片展示） |
+| `collected_at` | ✅ | string | ISO8601 采集时间戳 |
 
 ## 质量校验（写完 JSONL 后自检）
 

@@ -42,10 +42,11 @@ description: |
 ### 阶段一：入口发现
 1. 从 `labs.yaml` 匹配目标实验室，获取其主域名
 2. 浏览器 navigate → 主域名
-3. 浏览器 snapshot → LLM 分析页面导航和链接
-4. 目标：找到 People/Faculty/Team/Members/Research Groups 类页面入口
-5. 详细的链接判定规则见 `references/entry-discovery.md`
-6. 记录发现的入口 URL 和跳转路径（写入 `_crawl_path_*.md`）
+3. **同步提取实验室 logo**：使用 `references/lab-logo-extraction.md` 中的优先级策略，从主页提取 `logo_url`
+4. 浏览器 snapshot → LLM 分析页面导航和链接
+5. 目标：找到 People/Faculty/Team/Members/Research Groups 类页面入口
+6. 详细的链接判定规则见 `references/entry-discovery.md`
+7. 记录发现的入口 URL 和跳转路径（写入 `_crawl_path_*.md`）
 
 ### 阶段二：结构探索
 1. 浏览器 navigate → 发现的人才入口
@@ -100,8 +101,9 @@ Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任
 
 ### 输出
 1. 写 JSONL：`<cwd>/output/<lab_slug>/_YYYY-MM-DD.jsonl`（schema 见 `references/output-schema.md`）
-2. 写完成报告：`<cwd>/output/<lab_slug>/_report_YYYY-MM-DD.md`（人数/角色分布/质量提示/异常）
-3. 写探索路径：`<cwd>/output/<lab_slug>/_crawl_path_YYYY-MM-DD.md`（入口/跳转链/跳过决策）
+2. 写实验室元数据：`<cwd>/output/<lab_slug>/_lab_info.json`，包含 `lab_name`, `homepage`, `logo_url` 等（供实验室卡片展示）
+3. 写完成报告：`<cwd>/output/<lab_slug>/_report_YYYY-MM-DD.md`（人数/角色分布/质量提示/异常）
+4. 写探索路径：`<cwd>/output/<lab_slug>/_crawl_path_YYYY-MM-DD.md`（入口/跳转链/跳过决策）
 
 其中 `<cwd>` 是启动 Hermes 时的当前工作目录。这样每次项目的数据都保存在项目自己的目录下，不会和 skill 代码混在一起。脚本 `scripts/crawl.py` 中的 `resolve_output_dir` 函数已封装该逻辑：显式传入 `output_dir` 时使用该值，否则使用 `Path.cwd() / "output"`。
 
@@ -145,6 +147,7 @@ For **MIT CSAIL** (and other labs serving clean server-rendered HTML like Drupal
 | 跳过非人员页面 | twitter/github/会议/PDF/新闻/博客 → LLM 判定后跳过 |
 | bio 详情全量跟进 | 列表页每个人都跟进其 bio 详情页；不采样、不限制；用户明确有充足 API 额度时，应完整跟进所有人员 |
 | photo_url 默认收录 | 从每个人员的个人主页提取头像照片URL（第一个非Logo图片），写入 photo_url 字段，不下载图片 |
+| lab_logo_url 默认收录 | 从实验室主域名提取 logo URL，写入 `_lab_info.json` 中的 logo_url，供实验室卡片展示 |
 | 不伪造字段 | 提取不到的字段直接省略（不写 null/空串/猜测值） |
 | 每页提取校验 | LLM 输出的每人 JSON 必须含 name 字段，否则丢弃该条 |
 | robots.txt 遵守 | 访问前检查，disallow 则跳过该路径 |
