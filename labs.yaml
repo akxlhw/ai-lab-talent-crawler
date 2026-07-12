@@ -10,10 +10,30 @@ labs:
       known_sublabs: ["NLP Group", "SNAP", "Ermon Lab"]
       expected_roles: ["Faculty", "PhD Students", "Postdocs", "Staff", "Alumni"]
 
-  # === 候选（待 agent 首次探索验证） ===
+  - name: "Berkeley AI Research"
+    domain: "https://bair.berkeley.edu"
+    hints:
+      known_people_urls: ["/people/faculty", "/people/staff", "/people/students"]
+      role_filter_selector: "div[role='button']"
+      letter_filter_selector: "a.cursor-pointer.no-underline"
+      expected_roles: ["Faculty", "Staff", "PhD", "Postdoc", "Masters", "Undergraduate", "Alumni", "Visiting Scholar", "Visiting Researcher"]
+      notes: "Next.js app; role filters are MUI Chips (div[role=button]) not <button>. Students and Alumni share /people/students page; click 'All' role filter to include Alumni."
+
   - name: "MIT CSAIL"
     domain: "https://www.csail.mit.edu"
+    hints:
+      known_people_urls: ["/people"]
+      expected_roles: ["Faculty", "Professor", "Graduate Student", "PhD Student", "Postdoc", "Alumni"]
+      notes: "Drupal-based site with dynamic /people page. Server-side rendered detail pages have consistent field classes."
 
+  - name: "南京大学LAMDA实验室"
+    domain: "http://www.lamda.nju.edu.cn"
+    hints:
+      known_sublabs: ["LAMDA", "南京大学LAMDA"]
+      expected_roles: ["教授", "副教授", "助理教授", "博士生", "博士后", "硕士生", "工作人员"]
+      notes: "Lab homepage contains a `teachers_students` JavaScript array that maps advisors to students and alumni. Parse this array to build advisor relationships."
+
+  # === 候选（待 agent 首次探索验证） ===
   - name: "Google DeepMind"
     domain: "https://www.deepmind.com"
 
@@ -29,9 +49,6 @@ labs:
   - name: "Microsoft Research"
     domain: "https://www.microsoft.com/en-us/research"
 
-  - name: "Berkeley AI Research"
-    domain: "https://bair.berkeley.edu"
-
   - name: "北京智源"
     domain: "https://www.baai.ac.cn"
     hints:
@@ -39,9 +56,3 @@ labs:
 
   - name: "清华大学人工智能研究院"
     domain: "https://www.ai.tsinghua.edu.cn"
-
-  - name: "南京大学LAMDA实验室"
-    domain: "http://www.lamda.nju.edu.cn"
-    hints:
-      known_sublabs: ["LAMDA", "南京大学LAMDA"]
-      expected_roles: ["教授", "副教授", "助理教授", "博士生", "博士后", "硕士生", "工作人员"]
