@@ -373,5 +373,26 @@ http://www.lamda.nju.edu.cn/images/pub/lamda.png
 - **输出字段**: `role_section="Alumni"`, `role_raw="YYYY 博士/硕士 毕业"`, `cohort_year=YYYY`, `current_position="..."`
 - **重叠处理**: 部分现任教师/即将毕业博士同时出现在 Alumni 列表中（如 2025/2026 应届生）。保留多条记录，分别标记 `Faculty`/`PhD Students` 和 `Alumni`，导入时可按名字合并
 
-### 验证记录
-2026-07 从校友页提取了 445 位毕业生（博士 87 + 硕士 358），覆盖 2004-2026 年。
+#### 8. 师生关系（advisor）提取
+- **优先使用 `teachers_students` / `faculty_students` JS 数组**：
+  - LAMDA 主页 `CH.People.ashx` 内嵌 `teachers_students` 数组，含每位教师并其博士、硕士学生列表
+  - 必须解析此数组，将 "学生 → 教师" 写入所有人员记录的 `advisor` 字段（包括 Alumni、在读博士生、在读硕士）
+  - 如果 bio 页面的 Supervisor 与此映射不同，将少的那⸭放入 `co_advisor`
+- **次要方法：从个人主页渲染后的纯文本提取**：
+  - LAMDA 部分博士生页面使用 table+`<a>` 标签分割 "Supervisor" 和导师姓名，`BeautifulSoup.get_text()` 会将它们分成两行
+  - HTTP 直接提取失败时（如只拿到 "essor" 碎片），用 Camofox `/evaluate` 运行 `document.body.innerText` 获取渲染后的纯文本，再用正则提取
+  - 典型正则：`re.search(r'(?:under\s+the\s+supervision|supervised\s+by|Supervisor:)\s*(?:Prof\.?\s*)?([A-Z][a-zA-Z\s.-]+?)(?:\s*[.,;]|\s*$)', text)`
+
+### 9. 研究方向清洗
+- LAMDA 个人页面的 `About Me` / `Main Research Interests` 内 HTML 可能含有 `&nbsp;`、`<strong>`、`<em>` 等实体和标签
+- 必须先用 `html.unescape()` 解码，再用 BeautifulSoup `get_text('\n', strip=True)` 去除标签
+- 删除过渡性短语（"More specifically", "More generally", "I am interested in", "such as" 等）
+- 最后按逗号/分号拆分成 research_areas 数组
+
+### 10. 个人主页 URL 纠正
+- 初始采集时不能用中文姓名作为 URL slug（如 `/李岚/` 是无效的）
+- 必须从 `CH.PhD_student.ashx` / `CH.MSc_students.ashx` 的 `<a href>` 中直接读取拼音 slug（如 `/lil/`, `/shaojj/`, `/shiy/`）
+- 已毕业学生如果不在当前学生列表中，但在 alumni 列表有个人主页，可以从 alumni 记录拷贝 URL 修复
+
+## 验证记录
+2026-07 从 LAMDA 校友页提取了 445 位毕业生（博士 87 + 硕士 358），覆盖 2004-2026 年。从 `teachers_students` 数组中建立了 251 条学生-导师映射，应用后 94/94 在读博士生和 73/445 校友拥有 advisor 字段。

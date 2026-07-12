@@ -189,6 +189,7 @@ For **MIT CSAIL** (and other labs serving clean server-rendered HTML like Drupal
 - `references/lab-logo-extraction.md` — 从实验室主页提取 logo URL（供实验室卡片展示）
 - `references/mit-csail-page-structure.md` — MIT CSAIL 人物详情页面结构，含角色提取规则和研究领域标签处理
 - `references/batch-bio-extraction.md` — 大规模 bio 详情页批量提取：Python + requests/BeautifulSoup 方案，比逐个浏览器导航快 5-10 倍，含 DOM 选择器参考表和服务超时处理
+- `references/advisor-network-extraction.md` — 从实验室人员页面提取 "导师 → 学生" 关系的策略（JS 数组 / 表格 / bio 文本 / Camofox 渲染文本）
 - `references/github-skill-sync.md` — 将本 skill 同步到 GitHub 而不泄露 `output/` 数据
 - `labs.yaml` — 目标实验室清单
 - `scripts/crawl.py` — 辅助脚本（探活/写 JSONL/写报告/读 labs.yaml）
