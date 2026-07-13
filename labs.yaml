@@ -3,56 +3,350 @@
 # agent 从 domain 出发自主探索入口，不依赖硬编码 URL
 
 labs:
-  # === 已验证可采集（Hermes 已跑通） ===
-  - name: "Stanford AI Lab"
-    domain: "https://ai.stanford.edu"
-    hints:
-      known_sublabs: ["NLP Group", "SNAP", "Ermon Lab"]
-      expected_roles: ["Faculty", "PhD Students", "Postdocs", "Staff", "Alumni"]
-
-  - name: "Berkeley AI Research"
-    domain: "https://bair.berkeley.edu"
-    hints:
-      known_people_urls: ["/people/faculty", "/people/staff", "/people/students"]
-      role_filter_selector: "div[role='button']"
-      letter_filter_selector: "a.cursor-pointer.no-underline"
-      expected_roles: ["Faculty", "Staff", "PhD", "Postdoc", "Masters", "Undergraduate", "Alumni", "Visiting Scholar", "Visiting Researcher"]
-      notes: "Next.js app; role filters are MUI Chips (div[role=button]) not <button>. Students and Alumni share /people/students page; click 'All' role filter to include Alumni."
-
-  - name: "MIT CSAIL"
-    domain: "https://www.csail.mit.edu"
-    hints:
-      known_people_urls: ["/people"]
-      expected_roles: ["Faculty", "Professor", "Graduate Student", "PhD Student", "Postdoc", "Alumni"]
-      notes: "Drupal-based site with dynamic /people page. Server-side rendered detail pages have consistent field classes."
-
-  - name: "南京大学LAMDA实验室"
-    domain: "http://www.lamda.nju.edu.cn"
-    hints:
-      known_sublabs: ["LAMDA", "南京大学LAMDA"]
-      expected_roles: ["教授", "副教授", "助理教授", "博士生", "博士后", "硕士生", "工作人员"]
-      notes: "Lab homepage contains a `teachers_students` JavaScript array that maps advisors to students and alumni. Parse this array to build advisor relationships."
-
-  # === 候选（待 agent 首次探索验证） ===
-  - name: "Google DeepMind"
-    domain: "https://www.deepmind.com"
-
-  - name: "FAIR"
-    domain: "https://ai.meta.com"
-
-  - name: "OpenAI"
-    domain: "https://openai.com"
-
-  - name: "Anthropic"
-    domain: "https://www.anthropic.com"
-
-  - name: "Microsoft Research"
-    domain: "https://www.microsoft.com/en-us/research"
-
-  - name: "北京智源"
-    domain: "https://www.baai.ac.cn"
-    hints:
-      expected_roles: ["研究员", "博士生", "博士后"]
-
-  - name: "清华大学人工智能研究院"
-    domain: "https://www.ai.tsinghua.edu.cn"
+- name: Stanford AI Lab (SAIL)
+  domain: https://sail.stanford.edu
+  hints:
+    known_sublabs:
+    - NLP Group
+    - SNAP
+    - Ermon Lab
+    expected_roles:
+    - Faculty
+    - PhD Students
+    - Postdocs
+    - Staff
+    - Alumni
+    notes: Stanford AI Lab main portal. | CV、NLP、机器人、医疗AI | 创业密度极高，PhD/Postdoc流动性大
+    known_people_urls:
+    - /people
+- name: Berkeley AI Research (BAIR)
+  domain: https://bair.berkeley.edu
+  hints:
+    known_people_urls:
+    - /people/faculty
+    - /people/staff
+    - /people/students
+    - /people
+    role_filter_selector: div[role='button']
+    letter_filter_selector: a.cursor-pointer.no-underline
+    expected_roles:
+    - Faculty
+    - Staff
+    - PhD
+    - Postdoc
+    - Masters
+    - Undergraduate
+    - Alumni
+    - Visiting Scholar
+    - Visiting Researcher
+    notes: Next.js app; role filters are MUI Chips (div[role=button]) not <button>. Students and Alumni share /people/students
+      page; click 'All' role filter to include Alumni. | RL、机器人、自动驾驶、LLM | 有完整的Students/Postdocs列表，RL人才库
+- name: MIT CSAIL
+  domain: https://csail.mit.edu
+  hints:
+    known_people_urls:
+    - /people
+    - /research
+    expected_roles:
+    - Faculty
+    - Professor
+    - Graduate Student
+    - PhD Student
+    - Postdoc
+    - Alumni
+    notes: Drupal-based site with dynamic /people page. Server-side rendered detail pages have consistent field classes. |
+      CV、机器人、计算生物学、系统 | 按研究组细分，PI页面链接到个人主页
+- name: CMU Machine Learning Dept
+  domain: https://ml.cmu.edu
+  hints:
+    known_people_urls:
+    - /people
+    notes: ML理论、统计学习 | 全球首个ML独立系，Faculty/Students/Staff全公开
+- name: CMU Robotics Institute
+  domain: https://ri.cmu.edu
+  hints:
+    known_people_urls:
+    - /people
+    notes: 机器人、自动驾驶、CV | 全球最大机器人研究机构，人员按职称分层清晰
+- name: UW CSE / NLP Group
+  domain: https://cs.washington.edu
+  hints:
+    known_people_urls:
+    - /people
+    notes: NLP、计算语言学、AI4Science | NLP组 Noah Smith/Yejin Choi 团队人员完整
+- name: Princeton CS / ML
+  domain: https://cs.princeton.edu
+  hints:
+    known_people_urls:
+    - /people
+    notes: 理论ML、优化、因果推断 | Faculty+Graduate Students+Postdocs全公开
+- name: NYU CILVR / CDS
+  domain: https://cilvr.cs.nyu.edu
+  hints:
+    known_people_urls:
+    - /doku.php/people
+    notes: 深度学习、CV、NLP | CILVR组页面有详细成员+研究方向
+- name: UT Austin CS / ML
+  domain: https://cs.utexas.edu
+  hints:
+    known_people_urls:
+    - /research/ai-ml
+    notes: 优化、RL、NLP | 近年崛起，人员列表按研究组归类
+- name: UIUC CS
+  domain: https://cs.illinois.edu
+  hints:
+    known_people_urls:
+    - /research/ai-ml
+    notes: CV、数据挖掘、信息检索 | 华人学者密度高，人员信息极全
+- name: Cornell CS
+  domain: https://cs.cornell.edu
+  hints:
+    known_people_urls:
+    - /research/ai
+    notes: ML、NLP、系统 | Faculty+PhD Students+Research Staff全公开
+- name: Georgia Tech
+  domain: https://cc.gatech.edu
+  hints:
+    known_people_urls:
+    - /ai
+    notes: 机器人、人机交互、ML | 按实验室细分，人员与项目关联清晰
+- name: Harvard SEAS
+  domain: https://seas.harvard.edu
+  hints:
+    known_people_urls:
+    - /computer-science/people
+    notes: 计算神经科学、AI安全、因果推断 | 跨学科强，Faculty个人主页通常含招生意向
+- name: Caltech CMS
+  domain: https://cms.caltech.edu
+  hints:
+    known_people_urls:
+    - /people
+    notes: 理论ML、优化、计算数学 | 小而精，人员虽少但信息极详细
+- name: UCSD CSE / HDSI
+  domain: https://cse.ucsd.edu
+  hints:
+    known_people_urls:
+    - /research/ai-ml
+    notes: CV、NLP、数据科学 | 与Halıcıoğlu Data Science Institute联动
+- name: UCLA CS
+  domain: https://cs.ucla.edu
+  hints:
+    known_people_urls:
+    - /research/ai
+    notes: CV、NLP、系统 | 人员按AI/ML/CV/NLP子领域分组
+- name: USC ISI
+  domain: https://isi.edu
+  hints:
+    known_people_urls:
+    - /research-groups
+    notes: NLP、信息抽取、多语言AI | ISI是独立研究所，人员结构扁平，Postdoc多
+- name: UNC Chapel Hill CS
+  domain: https://cs.unc.edu
+  hints:
+    known_people_urls:
+    - /research/ai-ml
+    notes: CV、NLP、健康AI | 有完整的Graduate Students目录
+- name: UW Madison CS
+  domain: https://cs.wisc.edu
+  hints:
+    known_people_urls:
+    - /research/ai
+    notes: ML理论、优化、数据挖掘 | Midwest强校，人员流动率适中，挖角竞争小
+- name: Purdue CS
+  domain: https://cs.purdue.edu
+  hints:
+    known_people_urls:
+    - /research/ai-ml
+    notes: CV、机器人、系统 | 工程型学校，Research Engineer储备足
+- name: 清华IIIS
+  domain: https://iiis.tsinghua.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: 理论计算机、AI基础、交叉信息 | 姚期智坐镇，Faculty/Students/Postdocs全公开，华人顶尖人才库
+- name: 清华AIR
+  domain: https://air.tsinghua.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: 自动驾驶、智慧医疗、大模型 | 张亚勤主导，产业转化强，人员含职称+研究方向
+- name: 清华CS
+  domain: https://cs.tsinghua.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: CV、NLP、系统 | 国内CS最强，Faculty/Students信息完整
+- name: 北大AI研究院
+  domain: https://ai.pku.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: 通用AI、认知推理、CV | 朱松纯领衔，通用AI方向，人员分层清晰
+- name: 北大EECS
+  domain: https://eecs.pku.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: NLP、CV、系统 | 传统强系，人员信息极全
+- name: 上海AI Lab
+  domain: https://pjlab.org.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: 大模型、科学智能、具身智能 | 国家战略级，人员按研究中心分组，信息详细
+- name: 智源研究院 (BAAI)
+  domain: https://baai.ac.cn
+  hints:
+    known_people_urls:
+    - /team
+    notes: 大模型、悟道、FlagOpen | 学术共同体模式，研究员+工程师双轨公开
+- name: 中科院自动化所
+  domain: https://ia.cas.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: 模式识别、CV、脑科学 | 国内CV黄埔军校，按实验室/中心分组
+- name: 港中文MMLab
+  domain: https://mmlab.ie.cuhk.edu.hk
+  hints:
+    known_people_urls:
+    - /people
+    notes: 计算机视觉、医学影像、视频理解 | 汤晓鸥legacy，传承清晰，PhD/Postdoc/RA全公开
+- name: 港科大CSE
+  domain: https://cse.ust.hk
+  hints:
+    known_people_urls:
+    - /people
+    notes: 大模型、机器人、数据科学 | 国际化程度高，人员信息中英双语
+- name: 浙大CAD&CG
+  domain: https://cad.zju.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: 计算机图形学、三维视觉、数字人 | 周昆领衔，图形学+AI，人员按年级分层
+- name: 南大LAMDA
+  domain: https://lamda.nju.edu.cn
+  hints:
+    known_sublabs:
+    - LAMDA
+    - 南京大学LAMDA
+    expected_roles:
+    - 教授
+    - 副教授
+    - 助理教授
+    - 博士生
+    - 博士后
+    - 硕士生
+    - 工作人员
+    notes: Lab homepage contains a `teachers_students` JavaScript array that maps advisors to students and alumni. Parse this
+      array to build advisor relationships. | ML、数据挖掘、集成学习 | 周志华学派，国内ML理论最强，Students/Alumni全公开
+    known_people_urls:
+    - /people
+- name: 上交CS
+  domain: https://cs.sjtu.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: NLP、CV、系统 | 按研究所分组，人员信息完整
+- name: 中科大CS
+  domain: https://cs.ustc.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: CV、NLP、语音 | 华五强校，信息较全
+- name: 复旦NLP
+  domain: https://nlp.fudan.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: NLP、知识图谱、社会计算 | NLP组历史悠久，人员结构清晰
+- name: 哈工大SCIR
+  domain: https://ir.hit.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: NLP、信息检索、社会计算 | 国内NLP重镇，人员按年级/职称分层
+- name: 西电ISN
+  domain: https://isn.xidian.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: CV、雷达信号、智能感知 | 军工背景强，CV人才储备深
+- name: 人大高瓴AI
+  domain: https://ai.ruc.edu.cn
+  hints:
+    known_people_urls:
+    - /people
+    notes: 信息检索、NLP、推荐系统 | 文继荣领衔，文波老师网络广
+- name: Mila
+  domain: https://mila.quebec
+  hints:
+    known_people_urls:
+    - /en/people
+    notes: 深度学习、GNN、因果推断 | Bengio坐镇，Members按Faculty/Students/Postdocs/Staff全公开，可下载CSV
+- name: Vector Institute
+  domain: https://vectorinstitute.ai
+  hints:
+    known_people_urls:
+    - /team
+    notes: 深度学习、医疗AI、NLP | Hinton legacy，Fellows/Researchers/Postdocs全公开，产业联动强
+- name: Oxford ML / DeepMind联培
+  domain: https://cs.ox.ac.uk
+  hints:
+    known_people_urls:
+    - /people
+    notes: RL、NLP、概率ML | 大量DeepMind alumni，人员按研究组细分
+- name: Cambridge ML Group
+  domain: https://mlg.eng.cam.ac.uk
+  hints:
+    known_people_urls:
+    - /people
+    notes: 贝叶斯方法、NLP、科学AI | Ghahramani团队，贝叶斯传统深厚，人员信息详细
+- name: Imperial College London
+  domain: https://imperial.ac.uk
+  hints:
+    known_people_urls:
+    - /computing/people
+    notes: CV、机器人、ML | 工程与应用导向，人员按研究组归类
+- name: ETH Zurich
+  domain: https://inf.ethz.ch
+  hints:
+    known_people_urls:
+    - /jobs/people
+    notes: CV、机器人、ML | 欧洲MIT，人员信息极全，英语环境
+- name: EPFL CVLab
+  domain: https://cvlab.epfl.ch
+  hints:
+    known_people_urls:
+    - /people
+    notes: 计算机视觉、图形学、ML | CVLab全球知名，人员按职称分层
+- name: Technion CS
+  domain: https://cs.technion.ac.il
+  hints:
+    known_people_urls:
+    - /people
+    notes: ML理论、优化、CV | 创业文化浓，人员信息全英文
+- name: NUS SoC
+  domain: https://comp.nus.edu.sg
+  hints:
+    known_people_urls:
+    - /people
+    notes: CV、ML、多媒体 | 亚洲顶尖，国际化，华人学者多，信息详细
+- name: UTokyo / RIKEN AIP
+  domain: https://aip.riken.jp
+  hints:
+    known_people_urls:
+    - /people
+    notes: 机器人、CV、科学AI | 日本AI国家队，人员按研究中心分组
+- name: MPI for Informatics
+  domain: https://mpi-inf.mpg.de
+  hints:
+    known_people_urls:
+    - /people
+    notes: CV、NLP、计算机图形学 | 马普所体系，研究人员国际化，信息全英文
+- name: University of Alberta
+  domain: https://ualberta.ca
+  hints:
+    known_people_urls:
+    - /computing-science/research/ai
+    notes: 强化学习（RL摇篮） | Sutton & Silver legacy，RL人才源头，人员结构清晰
