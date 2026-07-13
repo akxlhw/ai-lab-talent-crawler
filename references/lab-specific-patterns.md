@@ -61,7 +61,32 @@
   - 可提取 role_raw, research_areas, department 等字段
   - 建议优先跟进此页面获取完整信息
 
-### 通用策略
+### Stanford AI Lab Faculty 页面 (https://ai.stanford.edu/faculty/)
+
+- **结构**：WordPress 页面，核心教师姓名存放在 `<span class="name">` 中，后跟研究方向简短描述
+- **采集策略**：
+  - 遍历 `span.name` 提取姓名
+  - 通过父容器中的 `<p>` 或后续兄弟节点获取研究方向
+  - "Read More" 链接通常指向 `cs.stanford.edu/people/<slug>/` 或 `profiles.stanford.edu/<id>`
+- **分区**：Faculty / Affiliated Faculty / Former & Emeritus Faculty
+
+### Stanford SNAP (http://snap.stanford.edu/)
+
+- **人员页面**：http://snap.stanford.edu/people.html
+- **结构**：`<h3>` 标题后跟 `<table>`，分 Faculty / PhD Students / PostDocs / Research and Administrative Staff / Students / Visiting Scholars / Alumni
+- **采集策略**：直接使用 BeautifulSoup 解析表格，第一个 td 通常为姓名，后续 td 为当前去向（Alumni）
+
+### Stanford Ermon Group (https://cs.stanford.edu/~ermon/website/)
+
+- **人员页面**：https://cs.stanford.edu/~ermon/website/people.html
+- **结构**：`<div class="content">` 内部使用 `<h1>` 作为分区标题（Faculty / Postdocs and Ph.D. Students / Alumni），每个人员为 `<div class="column">` 包含 `<div class="desc">`
+- **采集策略**：遍历 `div.column`，从 `div.desc` 中提取姓名；括号内容为当前去向（Alumni）或 co-advisor 信息
+
+### Stanford ML Group
+
+- **主页**：https://stanfordmlgroup.github.io/
+- **特点**：主页以项目展示为主，没有独立的 people/team 页面
+- **采集策略**：如需采集 Andrew Ng 及其学生，需从项目页面或其他渠道装载
 
 ### 跨子实验室人员重复处理
 - 同一人可能出现在多个子实验室（如教授同时指导 NLP 和 statsml 学生）
@@ -396,3 +421,72 @@ http://www.lamda.nju.edu.cn/images/pub/lamda.png
 
 ## 验证记录
 2026-07 从 LAMDA 校友页提取了 445 位毕业生（博士 87 + 硕士 358），覆盖 2004-2026 年。从 `teachers_students` 数组中建立了 251 条学生-导师映射，应用后 94/94 在读博士生和 73/445 校友拥有 advisor 字段。
+
+## Berkeley AI Research (BAIR)
+
+### 主域与人员入口
+- **主域**: https://bair.berkeley.edu/
+- **People 下拉**: Faculty (`/people/faculty`), Staff (`/people/staff`), Students & Alumni (`/people/students`)
+- **Logo**: `<img alt="BAIR">` → `https://bair.berkeley.edu/logos/BAIR_Logo_Blue_BearOnly.svg`
+- **简介**: `/about` 页
+- **技术栈**: Next.js + MUI (Material UI) Chips
+
+### 关键结构
+
+#### 角色筛选器
+- 元素不是传统 `<button>`，而是 MUI Chip 组件：`<div role="button">`
+- 顺序：Current, All, Postdoc, PhD, Masters, Undergraduate, Visiting Scholar, Visiting Researcher, Alumni, Other
+- **重要**: 默认为 "Current" （仅在读学生），必须点击 "All" 才能包含 Alumni
+- 选择器: `document.querySelectorAll("[role='button']")` 而非 `document.querySelectorAll("button")`
+
+#### 字母筛选器
+- 元素：`<a class="cursor-pointer no-underline">` 和 `<a class="text-blue-800 no-underline">`
+- 顺序：All, A, B, C, ..., Z
+- 默认似乎不为 "All" 而是 "A" 字母，需遍历 A-Z 才能获取所有人员
+
+#### 学生/校友卡片
+每个 `<li>` 包含：
+1. **姓名**: `<h2>`
+2. **主页**: 外部 `<a href>`（可能为 `http://` 空链接）
+3. **学位/role**: `<p>`之一（Alumni/PhD/Postdoc/Masters/Undergraduate/Visiting Scholar/Visiting Researcher）
+4. **研究方向**: `<p>`，多个关键词通常以逗号分隔
+5. **导师**: `<p>Advisors: X, Y, ...</p>`
+
+### 采集策略
+
+1. 使用 Camofox/类似浏览器服务渲染 Next.js 页面
+2. 先点击 "All" 角色筛选器（使用 `[role="button"]` 选择器）
+3. 遍历 A-Z 字母筛选器，每个字母提取卡片
+4. 不需跟进个人主页，列表页已包含足够字段
+5. 导师从 "Advisors: X, Y" 解析，第一个为 `advisor`，第二个为 `co_advisor`
+
+### 字段映射
+- Faculty → `role_section="Faculty"`
+- Staff → `role_section="Staff"`
+- PhD → `role_section="PhD Student"`
+- Postdoc → `role_section="Postdoc"`
+- Masters → `role_section="Master Student"`
+- Undergraduate → `role_section="Undergraduate"`
+- Alumni → `role_section="Alumni"`
+- Visiting Scholar / Visiting Researcher → `role_section="Visitor"`
+
+### 照片采集
+- BAIR 的人员列表页（Faculty/Staff/Students）不显示头像照片
+- Faculty 和 Students 通常有个人主页链接
+- 如需 `photo_url`，必须在主页提取阶段完成后，批量跟进个人主页
+- 提取策略：
+  1. `img[alt*="姓名"]`
+  2. `<main>` 内第一张尺寸 ≥ 80px 的非 Logo 图片
+  3. 页面上最大的非 Logo/图标图片
+- 预期命中率：Faculty 个人主页 60-80%（官方 people.eecs.berkeley.edu 页面模板不统一），学生个人主页 40-60%。
+- 去向等信息未在列表页展示，如需应在报告中注明并录入未知字段等级。
+
+### 已知异常
+- 部分主页为 `http://` 空字符串，应当置为 `null` 而非空主页
+- 部分 Undergraduate "Advisors:" 字段为空
+- 校友当前去向（`current_position`）未在列表页展示
+- 部分 Staff 姓名和职位紧凑在一起，需正则分离
+- 列表页不含照片，需跟进个人主页补 `photo_url`
+
+### 验证记录
+2026-07 采集 645 位人员（Alumni 305, PhD Student 181, Faculty 91, Postdoc 29, Undergraduate 22, Master Student 10, Staff 5, Visitor 2），homepage 覆盖 87%，research_areas 898, advisor 74%, co_advisor 14%。
