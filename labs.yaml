@@ -158,12 +158,6 @@ labs:
     known_people_urls:
     - /research/ai-ml
     notes: CV、机器人、系统 | 工程型学校，Research Engineer储备足
-- name: 清华IIIS
-  domain: https://iiis.tsinghua.edu.cn
-  hints:
-    known_people_urls:
-    - /people
-    notes: 理论计算机、AI基础、交叉信息 | 姚期智坐镇，Faculty/Students/Postdocs全公开，华人顶尖人才库
 - name: 清华AIR
   domain: https://air.tsinghua.edu.cn
   hints:
