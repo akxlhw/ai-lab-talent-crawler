@@ -78,8 +78,10 @@ labs:
   domain: https://cs.princeton.edu
   hints:
     known_people_urls:
-    - /people
-    notes: 理论ML、优化、因果推断 | Faculty+Graduate Students+Postdocs全公开
+    - /people/faculty?facultyType=faculty
+    - /people/grad
+    - /people/research
+    notes: 理论ML、优化、因果推断 | Faculty+Graduate Students+Postdocs全公开 | /people 是 404，入口为带参 faculty 页；Drupal 服务端渲染可全量 HTTP 采集，结构见 lab-specific-patterns.md Princeton 节
 - name: NYU CILVR / CDS
   domain: https://cilvr.cs.nyu.edu
   hints:

@@ -88,6 +88,15 @@ terminal(background=true, notify_on_complete=true):
 - 症状：启动服务时返回 `port in use, port: 9377`
 - 解决：服务已经在运行，直接使用即可。如果服务无响应，先查找并杀死占用进程，再重启。
 
+**问题 9: 标签页空闲约 5 分钟被自动回收**
+- 症状：日志出现 `tab reaped (inactive)` / `session empty after tab reaper, closing`，之后对该 tabId 的操作返回 404
+- 原因：Camofox 内置 tab reaper 会清理空闲超时的标签页（实测约 5 分钟），长时间用 HTTP 抓取、未操作浏览器时必然触发
+- 解决：属正常行为，不影响服务本身。需要浏览器时重新 `POST /tabs` 创建标签页即可
+
+**问题 10: 后台启动的服务被任务超时杀掉**
+- 症状：以固定 timeout（如 600s）后台运行的 `npm start` 到点被杀，9377 端口失联
+- 解决：后台启动服务时设置 `disable_timeout=true`（或足够大的 timeout）；采集中途发现服务没了，若后续步骤已切换为 HTTP 直连抓取则无需重启，仅在还需要浏览器时重启服务
+
 ## 服务健康检查流程
 
 1. 发送探活请求：`GET http://localhost:9377/tabs?userId=probe`

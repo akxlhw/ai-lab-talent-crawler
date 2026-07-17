@@ -490,3 +490,57 @@ http://www.lamda.nju.edu.cn/images/pub/lamda.png
 
 ### 验证记录
 2026-07 采集 645 位人员（Alumni 305, PhD Student 181, Faculty 91, Postdoc 29, Undergraduate 22, Master Student 10, Staff 5, Visitor 2），homepage 覆盖 87%，research_areas 898, advisor 74%, co_advisor 14%。
+
+## Princeton CS / ML
+
+### 主域与人员入口
+- **主域**：https://cs.princeton.edu（301 → `www.cs.princeton.edu`）
+- **注意**：`/people` 是 **404**，入口是带参数的 faculty 页
+- **六大分区**（People 菜单）：
+  - Faculty `/people/faculty?facultyType=faculty`
+  - Researchers `/people/research`
+  - Technical Staff `/people/restech`
+  - Administrative Staff `/people/admins`
+  - Graduate Students `/people/grad`
+  - Graduate Alumni `/people/gradalumni`
+- **技术栈**：Drupal 服务端渲染 → **可全量 HTTP 采集**（requests + BeautifulSoup），浏览器仅用于入口发现
+
+### 关键结构
+
+#### Faculty 类型过滤器
+- `select[name=facultyType]`：`faculty` / `associatedFaculty` / `visitors` / `emeritus`（空=All）
+- GET query 参数直接生效；**按 4 类分别抓取**以保证 role_section 精确（All 页不标类型）
+- 另有 `select[name=research]` 研究方向过滤器（采集时不需要，列表已全量）
+
+#### 卡片结构 A（faculty/research/restech/admins 页）
+`li.custom_card`：
+- 姓名 + bio 链接：`a.custom_card__heading-link[href^="/people/profile/"]`
+- 头衔：`div.position`
+- 研究方向：`div.research_areas a`
+- 照片：`div.custom_card__image img`（src 去 query 即原图）
+
+#### 卡片结构 B（grad 页，207 人）
+`li.custom_card` 变体，**姓名无链接（无 bio 页）**：
+- 姓名：`h3.custom_card__heading` 纯文本
+- 头衔：`div.position`（"Graduate Student"）
+- 邮箱：`a[href^="mailto:"]`（直出！）
+- **导师：`div.advisors a`**（直出！第一人 advisor，其余 co_advisor）
+- 照片：同结构 A
+
+#### Alumni 结构 C（gradalumni 页）
+扁平结构，非卡片：`h2`=毕业年份，`h3`=姓名，随后文本含 `Adviser(s):` + `<a>` 导师链接 + `Degree: PhD, 2025`
+- **GET `?year=YYYY` 过滤有效**（2026 回溯至 1960，每年约 25 人）
+- 按范围约束默认只采最近 5 届；Degree 年份是毕业年 ≠ cohort_year，不写入
+
+#### bio 详情页（/people/profile/<id>）
+- 头衔：`div.profile__person--title`
+- 邮箱：`div.profile__person--email a[href^="mailto:"]`
+- 个人主页：`a.button__homepage`
+- 研究方向：`div.profile__person--research_areas a`
+
+### 已知异常
+- **跨院系 Associated Faculty 的 bio 403**：约 13 人的 profile_url 指向 `ece/mae/soa/orfe.princeton.edu`，裸 requests 换完整浏览器头仍 403（反爬）。保留列表页字段记入报告，必要时用 Camofox 浏览器补
+- 同名跨分区重复（Faculty/Associated Faculty、Alumni 跨年）→ 按 name 去重保留信息最全记录
+
+### 验证记录
+2026-07-17 全量 HTTP 采集 491 人（Graduate Students 207、Alumni 121、Faculty 74、Researchers 29、Associated Faculty 20、Admin Staff 17、Emeritus 12、Tech Staff 10、Visitors 1），email 350、advisor 336+25、photo 214，约 25 分钟完成（含 bio 跟进 150/163）。

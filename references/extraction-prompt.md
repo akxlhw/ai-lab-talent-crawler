@@ -16,7 +16,8 @@
 输出严格的 JSON 数组，每个元素是一个人员对象。不要输出任何额外文字或 markdown：
 
 [
-  {"name": "...", "role_section": "...", "homepage": "...", "department": "..."},
+  {"name": "...", "role_section": "...", "homepage": "...", "department": "...",
+   "role_raw": "...", "email": "...", "advisor": "...", "photo_url": "..."},
   ...
 ]
 
@@ -26,11 +27,18 @@
    "Staff"、"Alumni"）。如果页面没有分区结构，填 "Unknown"。
 3. homepage：从人员卡片中提取的个人主页链接（如有）。没有则省略此字段。
 4. department：从卡片提取的院系/专业（如有，如 "Computer Science"）。没有则省略。
-5. 跳过已毕业/校友，除非分区明确标注为 "Alumni"（此时 role_section 填 "Alumni"）。
-6. 警惕分层 section 结构：如果页面上有一个顶级 "Alumni" 分区，其下再出现 "PhD Students"、
+5. 卡片富字段：很多站点的列表卡片直接展示更多字段（如 Princeton 研究生卡片直出
+   email 和 Advisers），看到就一并提取，没有则省略，不要留 null/空串：
+   - role_raw：卡片上的头衔原文（如 "Assistant Professor"）
+   - email：卡片上的邮箱（mailto 链接文本）
+   - advisor / co_advisor：卡片上的导师/指导老师。第一人填 advisor，其余填 co_advisor
+   - photo_url：卡片上的头像图片 URL（只存 URL，不下载图片）
+   这些字段在列表页提取到后，对应人员可不再进 bio 详情页（节省预算）。
+6. 跳过已毕业/校友，除非分区明确标注为 "Alumni"（此时 role_section 填 "Alumni"）。
+7. 警惕分层 section 结构：如果页面上有一个顶级 "Alumni" 分区，其下再出现 "PhD Students"、
    "Research Scientists"、"Master's Students" 等子标题，这些子标题下的人员仍然是校友，
    必须标记为 "Alumni"，而不是当前成员。遇到这种结构，以顶级分区标签为准。
-7. 不要编造任何字段——提取不到的字段直接省略，不要填 null 或空字符串。
+8. 不要编造任何字段——提取不到的字段直接省略，不要填 null 或空字符串。
 
 如果页面包含"下一页"、"Next"、"Load more" 或分页控件，在 JSON 数组末尾追加一个
 特殊对象（不计入人员数）：

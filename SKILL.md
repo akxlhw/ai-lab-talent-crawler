@@ -55,7 +55,10 @@ description: |
    - 有分页吗？
    - 每个人有 bio 详情页链接吗？
    - 有子实验室链接吗？（如 research-groups）
-3. 基于结构形成采集计划（哪些页要采、跳转链路、预计人数）
+3. **HTTP 直连判定（决定后续提取模式）**：用 requests/curl 直接 GET 列表页，与浏览器渲染结果对比：
+   - 返回 200 且 HTML 含完整人员卡片（有稳定 CSS class）→ **HTTP+parser 模式**：列表页与 bio 页全部走 HTTP + BeautifulSoup 解析，不用浏览器 snapshot。零 LLM 调用、无 snapshot 截断风险、快 5-10 倍（详见下文 "Server-Rendered Sites: Static HTML Scraping" 节）
+   - 403 / 内容需 JS 渲染 / 卡片结构不规则 → 浏览器模式（snapshot → LLM 提取）
+4. 基于结构形成采集计划（哪些页要采、跳转链路、预计人数）
 
 ### 阶段三：数据提取（循环每个目标页）
 1. 浏览器 snapshot → LLM 按 `references/extraction-prompt.md` 提取人员 JSON
@@ -124,9 +127,9 @@ Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任
 
 未满足 → 在报告中标注 "needs review" 并列出原因。**部分成功优于完全失败**：单个子站失败时，已采的数据正常输出，失败的子站记入报告。
 
-### CSAIL-Specific Efficiency: Static HTML Scraping
+### Server-Rendered Sites: Static HTML Scraping
 
-For **MIT CSAIL** (and other labs serving clean server-rendered HTML like Drupal sites), the browser-driven approach can be replaced with **concurrent HTTP scraping** for large batches:
+For **MIT CSAIL, Princeton CS** (and other labs serving clean server-rendered HTML like Drupal sites), the browser-driven approach can be replaced with **concurrent HTTP scraping** for large batches:
 
 1. **Fetch with requests or urllib** — Instead of `browser_navigate(url)` for each person, use `requests` (preferred — `pip install requests`) or `urllib.request` (stdlib fallback) with `concurrent.futures.ThreadPoolExecutor(max_workers=5)` to fetch 25+ pages in parallel. `requests` has significantly better timeout handling and error reporting than `urllib`.
 
@@ -145,6 +148,8 @@ For **MIT CSAIL** (and other labs serving clean server-rendered HTML like Drupal
 
 6. **Fallback to browser** when the page requires JavaScript rendering or when regex parsing fails.
 
+7. **403 on off-site / cross-department profiles** — associated faculty profiles often live on other department domains (e.g. `ece.princeton.edu`, `mae.princeton.edu`) that return 403 to plain `requests`, even with full browser headers. Do not burn budget retrying: keep the list-page fields for those people, note the count in the report, and only retry via Camofox browser if those specific fields are required.
+
 ## 约束（硬边界，必须遵守）
 
 | 约束 | 说明 |
@@ -157,6 +162,7 @@ For **MIT CSAIL** (and other labs serving clean server-rendered HTML like Drupal
 | lab_logo_url 默认收录 | 从实验室主域名提取 logo URL，写入 JSONL 第一行 `type=lab` 记录，供实验室卡片展示 |
 | lab_info 默认收录 | 从首页提取实验室简介（`description`）、核心研究方向（`research_focus`）和具体研究方向列表（`current_research_directions`），写入 `type=lab` 记录 |
 | 往届毕业生默认采集 | 主动寻找 `Alumni / 往届研究生` 页面，一律采集往届博士/硕士毕业生，`role_section="Alumni"`，与当前身份重叠时保留多条记录 |
+| 大型校友档案范围约束 | 校友档案可回溯数十年、规模超出预算时（如 Princeton 可回溯至 1960、约 1600+ 人），默认只采最近 5 届/5 年；范围决策必须记入报告，需要更早年份时按用户要求补采 |
 | advisor 默认收录 | 从 bio 详情页提取 Supervisor/Co-supervisor 信息，写入 `advisor` / `co_advisor` 字段，注意姓名可能被 `<a>` 标签分隔成多行，需合并还原 |
 | 不伪造字段 | 提取不到的字段直接省略（不写 null/空串/猜测值） |
 | 每页提取校验 | LLM 输出的每人 JSON 必须含 name 字段，否则丢弃该条 |
