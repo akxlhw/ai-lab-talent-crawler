@@ -530,7 +530,7 @@ http://www.lamda.nju.edu.cn/images/pub/lamda.png
 #### Alumni 结构 C（gradalumni 页）
 扁平结构，非卡片：`h2`=毕业年份，`h3`=姓名，随后文本含 `Adviser(s):` + `<a>` 导师链接 + `Degree: PhD, 2025`
 - **GET `?year=YYYY` 过滤有效**（2026 回溯至 1960，每年约 25 人）
-- 按范围约束默认只采最近 5 届；Degree 年份是毕业年 ≠ cohort_year，不写入
+- 按范围约束默认只采最近 10 届；Degree 年份是毕业年 ≠ cohort_year，不写入
 
 #### bio 详情页（/people/profile/<id>）
 - 头衔：`div.profile__person--title`

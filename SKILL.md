@@ -162,7 +162,7 @@ For **MIT CSAIL, Princeton CS** (and other labs serving clean server-rendered HT
 | lab_logo_url 默认收录 | 从实验室主域名提取 logo URL，写入 JSONL 第一行 `type=lab` 记录，供实验室卡片展示 |
 | lab_info 默认收录 | 从首页提取实验室简介（`description`）、核心研究方向（`research_focus`）和具体研究方向列表（`current_research_directions`），写入 `type=lab` 记录 |
 | 往届毕业生默认采集 | 主动寻找 `Alumni / 往届研究生` 页面，一律采集往届博士/硕士毕业生，`role_section="Alumni"`，与当前身份重叠时保留多条记录 |
-| 大型校友档案范围约束 | 校友档案可回溯数十年、规模超出预算时（如 Princeton 可回溯至 1960、约 1600+ 人），默认只采最近 5 届/5 年；范围决策必须记入报告，需要更早年份时按用户要求补采 |
+| 大型校友档案范围约束 | 校友档案可回溯数十年、规模超出预算时（如 Princeton 可回溯至 1960、约 1600+ 人），默认只采最近 10 届/10 年；范围决策必须记入报告，需要更早年份时按用户要求补采 |
 | advisor 默认收录 | 从 bio 详情页提取 Supervisor/Co-supervisor 信息，写入 `advisor` / `co_advisor` 字段，注意姓名可能被 `<a>` 标签分隔成多行，需合并还原 |
 | 不伪造字段 | 提取不到的字段直接省略（不写 null/空串/猜测值） |
 | 每页提取校验 | LLM 输出的每人 JSON 必须含 name 字段，否则丢弃该条 |
