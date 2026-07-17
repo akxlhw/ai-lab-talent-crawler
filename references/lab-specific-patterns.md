@@ -543,4 +543,4 @@ http://www.lamda.nju.edu.cn/images/pub/lamda.png
 - 同名跨分区重复（Faculty/Associated Faculty、Alumni 跨年）→ 按 name 去重保留信息最全记录
 
 ### 验证记录
-2026-07-17 全量 HTTP 采集 491 人（Graduate Students 207、Alumni 121、Faculty 74、Researchers 29、Associated Faculty 20、Admin Staff 17、Emeritus 12、Tech Staff 10、Visitors 1），email 350、advisor 336+25、photo 214，约 25 分钟完成（含 bio 跟进 150/163）。
+2026-07-17 全量 HTTP 采集 603 人（Graduate Students 207、Alumni 233（2017–2026 十届，含当日补采）、Faculty 74、Researchers 29、Associated Faculty 20、Admin Staff 17、Emeritus 12、Tech Staff 10、Visitors 1），email 350、advisor 444+25、photo 214，约 25 分钟完成（含 bio 跟进 150/163）。
