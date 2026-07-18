@@ -544,3 +544,50 @@ http://www.lamda.nju.edu.cn/images/pub/lamda.png
 
 ### 验证记录
 2026-07-17 全量 HTTP 采集 603 人（Graduate Students 207、Alumni 233（2017–2026 十届，含当日补采）、Faculty 74、Researchers 29、Associated Faculty 20、Admin Staff 17、Emeritus 12、Tech Staff 10、Visitors 1），email 350、advisor 444+25、photo 214，约 25 分钟完成（含 bio 跟进 150/163）。
+
+## Mila (Quebec AI Institute)
+
+### 主域与人员入口
+- **主域**：https://mila.quebec
+- **人员目录**：`/en/directory`（labs.yaml hint 的 `/en/people` 过期）
+- **技术栈**：Drupal 服务端渲染 → **可全量 HTTP 采集**
+- **WAF 实测**（2026-07-18）：旧报告记录的 cyberdefense.ai 拦截对带完整 Chrome UA +
+  Accept-Language 的 `requests` 不生效，5500+ 请求零失败零 403，无需浏览器
+
+### 关键结构
+
+#### 目录分页与过滤器
+- 分页 `?page=0..N`（103 页 × 36 卡片，约 3700 人含校友），服务端直出
+- **仅 `mila-membership=<tid>` URL 过滤有效**：36 Core Academic / 32 Associate Academic /
+  31 Core Industry / 33 Associate Industry / 34 Affiliate（合计约 270 人）
+- `mila-member-type`（81 Students/45 Staff/368 Alumni/47 Lab Rep/46 Board）与
+  `mila-team-type`（71 Leadership）的 URL 参数**无效**——checkbox 只被前端 JS 使用，
+  加参数返回全量 103 页。要全量就直接翻 103 页，别走过滤器
+
+#### 卡片（`.node--type-member`）
+- 姓名 + 详情链接：`a[href*="/en/directory/"]`
+- 角色文本：`.group-titles`（如 "PhD - Université de Montréal"、"Communications Lead, Executive Office"、"Alumni"）
+- 头像：`img`，`no-picture` 占位图需排除
+- 角色文本可直接粗分 role_section：PhD/Master/Postdoctorate/Professor/Alumni/
+  Undergraduate/DESS/Intern/visiting·collaborating/scientist/行政关键词
+
+#### 详情页（`/en/directory/<slug>`）
+- 邮箱：`[class*=field-name-field-email1]`
+- 头衔：`field-text4`（faculty）/ `field-text5`（学生，含 "PhD - 学校"）/ `field-text11`（staff）
+- membership：`field-taxonomy-reference1`（"Core Academic Member" 等，可兜底修正 Unknown → Faculty）
+- 研究方向：`field-taxonomy-references4` 的 `.field-item` 逐项（去掉 "Research Topics" 标签）
+- 个人主页：`field-link4 a[href]`（link1=Scholar / link2=LinkedIn / link3=X / link5=GitHub）
+- **导师**：`field-entity-reference1`（"Supervisor X"/"Principal supervisor : X"）、
+  `field-entity-reference2`（Co-supervisor），正则去前缀
+- 所属机构：从 "PhD - Université de Montréal" 的 ` - ` 后段解析 department
+
+### 已知异常
+- 校友详情页约 7 成稀疏（仅 name+角色文本），属数据源情况
+- 6 对同名不同 slug 记录（疑同名不同人或重复建档）
+- 目录无入学/毕业年份 → cohort_year 全员缺失；校友无法按年份裁剪，只能全量
+
+### 验证记录
+2026-07-18 全量 HTTP 采集 3700 人（Alumni 2055、PhD 562、Masters 345、Faculty 184、
+Staff 172、Collaborators 151、Postdocs 82、Interns 69、Research Staff 34 等），
+research_areas 1356、advisor 1266+252、department 1223、homepage 890、photo 995、
+email 246。列表 32s + 详情两轮 19 min（首轮 12min 预算 3288/3700，resume 标记补完）。

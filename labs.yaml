@@ -278,8 +278,8 @@ labs:
   domain: https://mila.quebec
   hints:
     known_people_urls:
-    - /en/people
-    notes: 深度学习、GNN、因果推断 | Bengio坐镇，Members按Faculty/Students/Postdocs/Staff全公开，可下载CSV
+    - /en/directory
+    notes: 深度学习、GNN、因果推断 | Bengio坐镇，目录全量约3700人（含校友），?page=N 分页，Drupal 服务端渲染可全量 HTTP 采集，结构见 lab-specific-patterns.md Mila 节
 - name: Vector Institute
   domain: https://vectorinstitute.ai
   hints:
