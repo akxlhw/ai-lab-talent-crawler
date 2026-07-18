@@ -110,6 +110,9 @@ Hermes 单次用户消息（turn）有工具调用上限。为避免长采集任
 ### 输出
 **仅输出一个 JSONL 文件**供人才库导入：`output/<lab_slug>/_YYYY-MM-DD.jsonl`
 - 第一行为 `"type": "lab"` 记录，包含 `lab_name`, `lab_slug`, `homepage`, `logo_url` 等实验室级字段
+- **lab 记录元数据主动采集**：`description` 与 `logo_url` 必须主动提取，不要只顾人员。
+  - description 按优先级找：`meta[name=description]` / `og:description` → About 页首段 → 首页 hero 区/官方纪念页；都找不到则省略并在报告中注明（实例：Princeton 官网无 meta 且 /about 是 404，description 最终取自 40 周年页）
+  - logo_url 提取策略见 `references/lab-logo-extraction.md`（favicon → header logo → 首图）
 - 后续每行为 `"type": "person"` 记录，不输出单独的 `_lab_info.json`
 - 写完成报告：`<cwd>/output/<lab_slug>/_report_YYYY-MM-DD.md`（人数/角色分布/质量提示/异常）
 - 写探索路径：`<cwd>/output/<lab_slug>/_crawl_path_YYYY-MM-DD.md`（入口/跳转链/跳过决策）
