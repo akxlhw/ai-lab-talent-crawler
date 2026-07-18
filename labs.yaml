@@ -86,8 +86,8 @@ labs:
   domain: https://cilvr.cs.nyu.edu
   hints:
     known_people_urls:
-    - /doku.php/people
-    notes: 深度学习、CV、NLP | CILVR组页面有详细成员+研究方向
+    - https://wp.nyu.edu/cilvr/cilvr-people/
+    notes: 深度学习、CV、NLP | CILVR组页面有详细成员+研究方向 | 2026-07-18：旧 DokuWiki 入口 /doku.php/people 已失效，站点迁移至 wp.nyu.edu/cilvr/（WordPress 服务端渲染，可纯 HTTP 采集）；官网无 Alumni 公开列表
 - name: UT Austin CS / ML
   domain: https://cs.utexas.edu
   hints:
