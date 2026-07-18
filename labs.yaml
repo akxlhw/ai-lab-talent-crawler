@@ -61,7 +61,7 @@ labs:
   hints:
     known_people_urls:
     - /people
-    notes: ML理论、统计学习 | 全球首个ML独立系，Faculty/Students/Staff全公开
+    notes: ML理论、统计学习 | 全球首个ML独立系，Faculty/Students/Staff全公开 | 列表数据直出JSON索引 peopleindexes/<slug>-index.v1.json，email用cs.cmu.edu名录API，见lab-specific-patterns.md CMU节
 - name: CMU Robotics Institute
   domain: https://ri.cmu.edu
   hints:

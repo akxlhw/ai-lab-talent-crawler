@@ -134,6 +134,14 @@
 - 使用多个子代理（delegate_task）并行处理
 - 详细策略见 `references/large-scale-bio-followup.md`
 
+### 2026-07-18 重采更新
+- **NLP 学生卡片是简化变体**：`<a><b>姓名</b></a><br/>院系`，无 h4；只匹配 `.description a h4` 会丢一半学生。且分区标题与成员不在同一 `.row`，必须按 DOM 顺序流式遍历
+- **NLP 校友有 34 行无链接纯文本**（"姓名, 院系"），旧流程漏采
+- **主站 Faculty 详情在隐藏 lightbox**：`div.lightbox`（经 `#lightbox-*` 锚点关联）含 research category + bio 链接 + 照片 → research_areas 新来源
+- nlp.stanford.edu 需显式 `r.encoding='utf-8'` 防乱码
+- SVL 是 Vue 站但人员已 SSR，HTTP 直连可解析
+- 重采结果：829 人（Alumni 434、PhD 208、Faculty 43 等；NLP 449 / statsml 187 / SNAP 85 / 主站 63 / Ermon 32 / SVL 13）
+
 ## MIT CSAIL
 
 ### People 页面 (https://www.csail.mit.edu/people/)
@@ -255,6 +263,13 @@ MIT CSAIL 每个 bio 详情页约需 **2 次工具调用**（1× navigate + 1× 
 ### 提取后去重注意事项
 
 同一人的 email 字段可能在列表页和 bio 页都有记录。以 bio 页为准（更准确）。如果同一人出现在 batch JSON 中多次（如跨角色采集），以 name 为键去重，取信息最完整的记录。
+
+### 2026-07-18 重采更新：Solr JSON 端点（重大发现）
+- Angular 列表页背后是 **Solr JSON**：`/api-proxy/angular-solr?_api_proxy_uri=people&q=*:*&rows=216&start=N`，直接返回全量人员（姓名/角色/头衔/邮箱/详情页/头像），彻底免除浏览器 "Load More"
+- **深分页限制**：`start >= 1000` 返回 403 → 按 `fq[]=ss_name:"<role>"` 分区查询规避；带空格的角色名必须加双引号（否则 0 结果）
+- `facet=true&facet.field=ss_name` 可先拿分区计数；`sitemap.xml` 含全部 /person/ URL 可作备用列表源
+- 头像映射：`public://...` → `https://www.csail.mit.edu/sites/default/files/styles/headshot/public/...`
+- 重采结果：1167 人（Grad Students 790、Researchers 173、Core/Dual 108、Visitors 70 等；Staff/UROPS 排除），email 100%（Solr 直出），bio 1167 页 0 失败
 
 ## 南京大学 LAMDA 实验室
 
@@ -422,6 +437,13 @@ http://www.lamda.nju.edu.cn/images/pub/lamda.png
 ## 验证记录
 2026-07 从 LAMDA 校友页提取了 445 位毕业生（博士 87 + 硕士 358），覆盖 2004-2026 年。从 `teachers_students` 数组中建立了 251 条学生-导师映射，应用后 94/94 在读博士生和 73/445 校友拥有 advisor 字段。
 
+### 2026-07-18 重采更新
+- **MSc 学生页（CH.MSc_students.ashx）与 PhD 页结构完全相同**，同一 td 表格解析即可（上次漏采 116 人，是最大缺口）
+- Director 锚点是 `<a id="director">`（id 非 name）
+- 列表页全站 UTF-8（旧文档 GB2312 疑虑不实）；**个人主页仍有 GBK**，需回退解码
+- `teachers_students` 数组映射从 251 缩到 198 条（毕业生被移除），Alumni advisor 覆盖随数据源下降
+- 重采结果：656 人（新增 MSc 116；PhD 81、Alumni 445），cohort_year 98%、homepage 98%
+
 ## Berkeley AI Research (BAIR)
 
 ### 主域与人员入口
@@ -490,6 +512,12 @@ http://www.lamda.nju.edu.cn/images/pub/lamda.png
 
 ### 验证记录
 2026-07 采集 645 位人员（Alumni 305, PhD Student 181, Faculty 91, Postdoc 29, Undergraduate 22, Master Student 10, Staff 5, Visitor 2），homepage 覆盖 87%，research_areas 898, advisor 74%, co_advisor 14%。
+
+### 2026-07-18 重采更新
+- 站点结构无变化（Next.js 必须浏览器渲染，点 "All" + 遍历 A-Z 一次成功）
+- **照片复用提速**：重采时同名同 homepage 的人可继承上次已验证的 photo_url，只对新的人抓照片（本次复用 319 张、新抓 177 张）
+- 站点更新频繁：6 天净增 188 人（+29%），重采价值高
+- 重采结果：833 人（Alumni 407、PhD 254、Faculty 91 等），advisor 77%+15%、research_areas 82%、homepage 87%
 
 ## Princeton CS / ML
 
@@ -591,3 +619,34 @@ http://www.lamda.nju.edu.cn/images/pub/lamda.png
 Staff 172、Collaborators 151、Postdocs 82、Interns 69、Research Staff 34 等），
 research_areas 1356、advisor 1266+252、department 1223、homepage 890、photo 995、
 email 246。列表 32s + 详情两轮 19 min（首轮 12min 预算 3288/3700，resume 标记补完）。
+
+## CMU Machine Learning Department
+
+### 主域与人员入口（2026-07-18 验证）
+- **主域**：https://ml.cmu.edu
+- **列表页 JS 渲染，但数据直出 JSON 索引**：`https://ml.cmu.edu/peopleindexes/<slug>-index.v1.json`
+  - 7 个分区索引（含 bio/title/rsrc/advisor/social/img 全字段，无需逐页跟进 bio）
+  - **slug 与 URL path 不一致**：`/people/adjunct` → `adjunct-faculty-index`；`/people/phd-alumni` → `alumni-phd-index`（注意不是 phd-alumni-index）
+- **email 来源**：`https://www.cs.cmu.edu/directory/api/v1/all.json`（SCS 全员名录，按 andrew id 匹配；由站点 `/js/main-people-*.js` 发现）
+  - 禁止用 `id@andrew.cmu.edu` 拼接猜测（2026-07-16 采集的错误，已修正为仅名录真实值）
+- 全程 2 类请求搞定，无需浏览器
+- 重采结果：451 人（PhD Alumni 227、PhD Students 97、Core Faculty 42、Affiliated Faculty 39、Staff 31、Postdocs 13、Adjunct 2）
+
+## 清华大学交叉信息研究院 (IIIS)
+
+> 注：IIIS 已从 labs.yaml 官方清单移除（交叉学科机构非纯 AI 实验室），以下为历史采集经验存档。
+
+### 主域与人员入口（2026-07-18 验证）
+- **主域**：https://iiis.tsinghua.edu.cn（中文站，静态可解析，无需浏览器；robots.txt 404 无限制）
+- 人员分散在各课题组页面（kaifeng.ac、weebly 站、DI Lab、ljktz 等）
+- **email 全站不公开**（教师详情页仅公共邮箱），email 0% 非采集遗漏
+
+### 关键结构
+- **kaifeng.ac（React 站但 SSR 完整）**：react-aria tab 的所有 tabpane 都在初始 HTML，HTTP 直连即可
+- **weebly 站（高阳组）**：人员列表是单 paragraph + `<br/>` 分隔，必须按 br 切分；逐 child 遍历会丢 cohort 并误吞 `<font>` 内联文本
+- **ljktz 校友格式随年份漂移**（逗号/句号/括号/空格分隔姓名与学位），需多模式姓名正则
+- DI Lab 头像 img 的 alt 恒为 "alt text"，占位图判定不能依赖 alt
+- 校友 "Ph.D. 2023" 是毕业年，不得填 cohort_year
+
+### 验证记录
+2026-07-18 重采 255 人（Alumni 112、PhD 57、Faculty 32、Postdocs 14 等），advisor 71%、photo 44%、cohort_year 12%（含 cohort_source）。
